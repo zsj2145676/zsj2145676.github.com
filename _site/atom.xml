@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+ <title>Corey Donohoe - atmos.org</title>
+ <link href="http://www.atmos.org/atom.xml" rel="self"/>
+ <link href="http://www.atmos.org"/>
+ <updated>2013-08-01T16:01:49+08:00</updated>
+ <id>http://www.atmos.org/</id>
+ <author>
+   <name>Corey Donohoe</name>
+   <email>atmos@atmos.org</email>
+ </author>
+
+ 
+ <entry>
+   <title>The Geek Talk Interview</title>
+   <link href="http://www.atmos.org/2010/12/13/geektalk-interview.html"/>
+   <updated>2010-12-13T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2010/12/13/geektalk-interview</id>
+   <content type="html">&lt;p&gt;The folks over at &lt;a href=&quot;http://thegeektalk.com/interviews/corey-donohoe/&quot;&gt;The Geek Talk&lt;/a&gt; posted an interview with me.  It&amp;rsquo;s considerably more informative than my current about page.  They&amp;rsquo;ve also interviewed a bunch of other people doing awesome shit recently too.  The format is pretty simple and it&amp;rsquo;s nice to find out a little more about people doing amazing things.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Joining GitHub</title>
+   <link href="http://www.atmos.org/2010/08/30/joining-github.html"/>
+   <updated>2010-08-30T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2010/08/30/joining-github</id>
+   <content type="html">&lt;p&gt;Today is my first day at &lt;a href=&quot;http://github.com&quot;&gt;GitHub&lt;/a&gt;.  I&amp;rsquo;m not gonna lie, it&amp;rsquo;s a little
+intimidating working alongside these amazing people:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;http://tom.preston-werner.com&quot;&gt;tom&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://ozmm.org&quot;&gt;chris&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://pjhyett.com&quot;&gt;pj&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://schacon.github.com/&quot;&gt;scott&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://tekkub.net&quot;&gt;tekkub&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://luckiestmonkey.com&quot;&gt;melissa&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://tomayko.com/about&quot;&gt;ryan&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://warpspire.com&quot;&gt;kyle&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://zachholman.com&quot;&gt;zach&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://techno-weenie.net&quot;&gt;rick&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;I use GitHub daily.  I love open source and have for about a decade.  I love
+the ecosystem that exists around sharing code for both teaching and learning.
+I believe GitHub will continue to grow over the next few years and I&amp;rsquo;m
+abso-fucking-lutely delighted to be a part of something I feel so passionate
+about.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m hoping that they&amp;rsquo;ll keep me around for a while. :)&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Constantly Shipping Refactorings</title>
+   <link href="http://www.atmos.org/2010/07/28/constantly-shipping-refactorings.html"/>
+   <updated>2010-07-28T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2010/07/28/constantly-shipping-refactorings</id>
+   <content type="html">&lt;p&gt;Recently, two of my favorite hackers, &lt;a href=&quot;http://github.com/martinemde&quot;&gt;Martin&lt;/a&gt; and &lt;a href=&quot;http://github.com/halorgium&quot;&gt;Tim&lt;/a&gt;, have been working on a
+pretty big refactoring in cloud.  In the past our team probably would&amp;rsquo;ve
+worked in a topic branch for a few weeks, followed by a painful
+rebase/merge, followed by a deployment we really hoped we got right.  Since
+this refactor requires db schema changes, we&amp;rsquo;d prolly have to take the site
+down for at least a few minutes to do it.  They didn&amp;rsquo;t want to do it this, so
+they approached the problem in a new way (to us).  Here&amp;rsquo;s what they&amp;rsquo;re doing.&lt;/p&gt;
+
+&lt;h2&gt;Unicorn and Zero Downtime Migrations with DataMapper&lt;/h2&gt;
+
+&lt;p&gt;We moved to unicorn the other month and have found the 0 downtime deploys
+really liberating.  If something is ready to go out to customers, we ship it.
+We have no planned day of the week or time of day that we ship.  On weekdays we
+normally ship 5-6 times a day and no one ever notices.  DB schema changes currently
+make things a little more difficult. When you add a new model, you create a
+migration for it, and you ship the model with the migration.  This
+is where Martin and Tim tried something new.  Instead of coupling the migration
+and the model addition, they&amp;rsquo;re doing the migrations before the model is
+introduced to the system.&lt;/p&gt;
+
+&lt;h2&gt;Adding a New Model&lt;/h2&gt;
+
+&lt;p&gt;So the other day they added a new model, let&amp;rsquo;s call it User.
+When they wanted to introduce the User model, they did it in
+two releases. In the first release they shipped a zero downtime deploy to
+add the users table. The first release didn&amp;rsquo;t take advantage of
+the user model, it was just a normal deploy with the migrations running AFTER
+the unicorn processes had restarted. In the second release they shipped the
+User model in another zero downtime deploy that actually started USING the users
+tabel. Adding a table is pretty trivial if you think about it, but what about removing a column?&lt;/p&gt;
+
+&lt;h2&gt;Data Transformation/Migration&lt;/h2&gt;
+
+&lt;p&gt;Have you ever had to rollback a deployment that had data migrations?  You need
+to go find your latest database backup, restore that, extend the outage you
+took because you hadn&amp;rsquo;t planned on things going south.  It&amp;rsquo;s insanely stressful
+and makes you look like a jackass to your co-workers.  Your customers won&amp;rsquo;t like
+it either.&lt;/p&gt;
+
+&lt;h2&gt;Removing a Column from a Model&lt;/h2&gt;
+
+&lt;p&gt;Let&amp;rsquo;s say that during the refactoring they discovered some insanity in our
+system: tokens in two places, one on the User model and one on the
+associated class Customer.  First deployment they tracked down all the places
+where the attribute, in this case &amp;lsquo;token&amp;rsquo;, was accessed directly and removed
+it.&lt;/p&gt;
+
+&lt;p&gt;Here&amp;rsquo;s an example of the User class before the changes:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;class User
+  include DataMapper::Resource
+
+  property :id,              Serial
+  property :token,           String, :required =&amp;gt; true,
+  belongs_to :customer,      Integer
+
+  def valid_token?
+    token == some_token_verification_method
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here&amp;rsquo;s an example of the User class after the changes:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;class User
+  include DataMapper::Resource
+
+  property :id,              Serial
+  belongs_to :customer,      Integer
+
+  def valid_token?
+    customer.token == some_token_verification_method
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When this code deploys, the User table still has the token field.
+Shortly after that, they shipped another release with a migration that only
+removed the newly unused column. Again, 0 downtime.  Guess how we do
+tables?  The same way.&lt;/p&gt;
+
+&lt;h2&gt;Renaming a column&lt;/h2&gt;
+
+&lt;p&gt;Renaming a column is kinda weird because it takes 4 deploys.  On the first deploy,
+create the new, unused column.
+On the second deploy, introduce code that starts using the new column and
+denormalizes the attributes as they&amp;rsquo;re accessed. This deploy also carries a zero downtime migration that copies the attribute over to the new column. All access to the attribute is now directed to the correct column. On the third deploy, remove all reference to the old
+column. Finally on the fourth deploy, nuke the old column after the deploy
+completes.  For an example of how the new column usage works, check this snippet out.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;class User
+  include DataMapper::Resource
+
+  property :id,              Serial
+  property :token,           String, :required =&amp;gt; true,
+  property :tos_accepted,    Boolean, :default  =&amp;gt; false
+  property :admin,           Boolean, :default  =&amp;gt; false
+  property :administrator,   Boolean, :default  =&amp;gt; false
+
+  timestamps :at
+
+  def admin
+    value = attribute_get(:admin)
+    value.nil? ? copy_admin : value
+  end
+
+  def admin?
+    admin
+  end
+
+  def copy_admin
+    unless update(:admin =&amp;gt; adminstrator)
+      raise &quot;Could not save user: #{errors.full_messages.join(&quot;, &quot;)}&quot;
+    end
+    admin
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2&gt;It&amp;rsquo;s so simple, who cares?&lt;/h2&gt;
+
+&lt;p&gt;One thing I really love about this is the guys are constantly shipping
+incremental improvements.  There won&amp;rsquo;t be an evening where they&amp;rsquo;re forced to
+work late to ship out their schema changes.  You&amp;rsquo;ll never hear them cursing
+other developers for introducing changes that mess with their refactoring.
+Even though they&amp;rsquo;re focused on a very large refactoring, they&amp;rsquo;re never a few
+days off from having something to show.  You can watch their progress as the
+commits flow by.  They never entered the mindset that it&amp;rsquo;s ok to get lost in
+refactoring wonderland.  Solving a problem elegantly doesn&amp;rsquo;t mean you have to
+go sit and think up the most beautiful solution ever. Break it down into little
+pieces and ship &amp;lsquo;em.&lt;/p&gt;
+
+&lt;p&gt;Tim, Martin, and I are in the process of automating these kinds of rollouts. We&amp;rsquo;re testing it right now.&lt;/p&gt;
+
+&lt;h2&gt;Hiring&lt;/h2&gt;
+
+&lt;p&gt;We&amp;rsquo;re also &lt;a href=&quot;http://www.engineyard.com/company/careers/ruby-engineers&quot;&gt;hiring right now&lt;/a&gt;.  Send &lt;a href=&quot;http://github.com/atmos&quot;&gt;me&lt;/a&gt; a message on &lt;a href=&quot;http://github.com&quot;&gt;github&lt;/a&gt; if you&amp;rsquo;re
+interested in working with a top notch group of hackers.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>as time goes by : blabbing 'bout sinatra</title>
+   <link href="http://www.atmos.org/2009/05/15/as-time-goes-by-blabbing-bout-sinatra.html"/>
+   <updated>2009-05-15T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2009/05/15/as-time-goes-by-blabbing-bout-sinatra</id>
+   <content type="html">&lt;h1&gt;Sinatra 0.9&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://twitter.com/jsmestad&quot;&gt;Justin Smestad&lt;/a&gt; invited me up to
+&lt;a href=&quot;http://www.factorylabs.com/&quot;&gt;factory labs&lt;/a&gt; to talk about
+&lt;a href=&quot;http://sinatrarb.com&quot;&gt;sinatra&lt;/a&gt; recently for one of their brown bag
+lunches.  He recorded the talk from his laptop and I&amp;rsquo;m amazed you can see or
+hear me.&lt;/p&gt;
+
+&lt;object width=&quot;400&quot; height=&quot;300&quot;&gt;
+  &lt;param name=&quot;allowfullscreen&quot; value=&quot;true&quot; /&gt;
+  &lt;param name=&quot;allowscriptaccess&quot; value=&quot;always&quot; /&gt;
+  &lt;param name=&quot;movie&quot; value=&quot;http://vimeo.com/moogaloop.swf?clip_id=4650697&amp;amp;server=vimeo.com&amp;amp;show_title=1&amp;amp;show_byline=1&amp;amp;show_portrait=0&amp;amp;color=&amp;amp;fullscreen=1&quot; /&gt;
+  &lt;embed src=&quot;http://vimeo.com/moogaloop.swf?clip_id=4650697&amp;amp;server=vimeo.com&amp;amp;show_title=1&amp;amp;show_byline=1&amp;amp;show_portrait=0&amp;amp;color=&amp;amp;fullscreen=1&quot; type=&quot;application/x-shockwave-flash&quot; allowfullscreen=&quot;true&quot; allowscriptaccess=&quot;always&quot; width=&quot;400&quot; height=&quot;300&quot;&gt;
+  &lt;/embed&gt;
+&lt;/object&gt;
+
+
+&lt;p&gt;My slides aren&amp;rsquo;t sync&amp;rsquo;d up but they&amp;rsquo;re here.&lt;/p&gt;
+
+&lt;p&gt;&lt;a title=&quot;View Sinatra 0.9 - Corey Donohoe on Scribd&quot; href=&quot;http://www.scribd.com/doc/15440443/Sinatra-09-Corey-Donohoe&quot; style=&quot;margin: 12px auto 6px auto; font-family: Helvetica,Arial,Sans-serif; font-style: normal; font-variant: normal; font-weight: normal; font-size: 14px; line-height: normal; font-size-adjust: none; font-stretch: normal; -x-system-font: none; display: block; text-decoration: underline;&quot;&gt;
+  Sinatra 0.9 - Corey Donohoe
+&lt;/a&gt;&lt;/p&gt;
+
+&lt;object id=&quot;doc_89742815376938&quot; name=&quot;doc_89742815376938&quot; height=&quot;500&quot; width=&quot;100%&quot; type=&quot;application/x-shockwave-flash&quot; data=&quot;http://d1.scribdassets.com/ScribdViewer.swf&quot; style=&quot;outline:none;&quot; rel=&quot;media:document&quot; resource=&quot;http://d1.scribdassets.com/ScribdViewer.swf?document_id=15440443&amp;access_key=key-1rytundm4w1pdeg41fow&amp;page=1&amp;viewMode=list&quot; xmlns:media=&quot;http://search.yahoo.com/searchmonkey/media/&quot; xmlns:dc=&quot;http://purl.org/dc/terms/&quot;&gt;
+  &lt;param name=&quot;movie&quot; value=&quot;http://d1.scribdassets.com/ScribdViewer.swf&quot; /&gt;
+  &lt;param name=&quot;wmode&quot; value=&quot;opaque&quot; /&gt;
+  &lt;param name=&quot;bgcolor&quot; value=&quot;#ffffff&quot; /&gt;
+  &lt;param name=&quot;allowFullScreen&quot; value=&quot;true&quot; /&gt;
+  &lt;param name=&quot;allowScriptAccess&quot; value=&quot;always&quot; /&gt;
+  &lt;param name=&quot;FlashVars&quot; value=&quot;document_id=15440443&amp;access_key=key-1rytundm4w1pdeg41fow&amp;page=1&amp;viewMode=list&quot; /&gt;
+  &lt;embed id=&quot;doc_89742815376938&quot; name=&quot;doc_89742815376938&quot; src=&quot;http://d1.scribdassets.com/ScribdViewer.swf?document_id=15440443&amp;access_key=key-1rytundm4w1pdeg41fow&amp;page=1&amp;viewMode=list&quot; type=&quot;application/x-shockwave-flash&quot; allowscriptaccess=&quot;always&quot; allowfullscreen=&quot;true&quot; height=&quot;500&quot; width=&quot;100%&quot; wmode=&quot;opaque&quot; bgcolor=&quot;#ffffff&quot;&gt;
+  &lt;/embed&gt;
+&lt;/object&gt;
+
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Hancock-Client-Rails: Works with Rails > 2.3.x</title>
+   <link href="http://www.atmos.org/2009/03/23/hancock-client-rails-using-sinatrarack-middleware-in-rails.html"/>
+   <updated>2009-03-23T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2009/03/23/hancock-client-rails-using-sinatrarack-middleware-in-rails</id>
+   <content type="html">&lt;p&gt;Recently I&amp;rsquo;ve been writing a bunch about &lt;a href=&quot;http://sinatrarb.com&quot;&gt;sinatra&lt;/a&gt; as middleware and one of the things you always hear people glorifying is how rack middleware can be dropped into any framework that&amp;rsquo;s built on rack.  Since I&amp;rsquo;m trying to get people to try &lt;a href=&quot;http://github.com/atmos/hancock&quot;&gt;hancock&lt;/a&gt; out, or atleast learn something from it, I figured I should investigate how you actually use the &lt;a href=&quot;http://github.com/atmos/hancock-client&quot;&gt;hancock-client&lt;/a&gt; sinatra app inside off rails 2.3.2.&lt;/p&gt;
+
+&lt;p&gt;One of the examples I&amp;rsquo;ve seen in quite a few presentations on using middleware in rack has something along the lines of:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://img.skitch.com/20090323-m4hba3yiqxdsupf389t8fxt4i3.jpg&quot; alt=&quot;middleware&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, I&amp;rsquo;ve yet to get a sample like this working with sinatra middleware.  For some reason sinatra always throws 404 errors instead of allowing those requests to pass through to rails.  Even if I set &amp;ldquo;disable :raise_errors&amp;rdquo; in my sinatra app, it&amp;rsquo;d still throw 404s.  So after a little googling I discovered a wonderful write up over at the &lt;a href=&quot;http://guides.rubyonrails.org/rails_on_rack.html&quot;&gt;rails on rack&lt;/a&gt; page.  I definitely learned a lot about how rails middleware works but I still couldn&amp;rsquo;t get my sinatra app functioning properly inside of rails.&lt;/p&gt;
+
+&lt;p&gt;I was kind of surprised to find out that there was very little documentation on using sinatra as middleware.  Sinatra is awesome for this, how could I be the first person trying to do this?  It turns out that I wasn&amp;rsquo;t. :)  &lt;a href=&quot;http://blog.ra66i.org/&quot;&gt;Raggi&lt;/a&gt; had explained how to do this to someone in #rack on freenode a few days earlier.  I looked through his &lt;a href=&quot;http://gist.github.com/81199&quot;&gt;gist on how he did it&lt;/a&gt;.  I didn&amp;rsquo;t understand it all but I hadn&amp;rsquo;t tried using the metal generator that rails introduced recently.  So I gave that a try and ended up with a piece of rails metal that looks like this.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://img.skitch.com/20090323-bw211t8spchuk6hu6tmxp7qu94.jpg&quot; alt=&quot;hancock metal&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This actually worked perfectly for me.  All I needed to do was make a subclass of Hancock::Client::Default and set the appropriate configuration options.  Next I gave myself a little helper in application.rb to check whether I was logged in or not, you&amp;rsquo;ve probably done something like this in every other app you&amp;rsquo;ve ever used.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://img.skitch.com/20090323-d1qrceyie3xme7ktf54sqccd28.jpg&quot; alt=&quot;logged_in helper&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Then there&amp;rsquo;s a simple controller that should be protected by the SSO middleware.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://img.skitch.com/20090323-nhhtb1wb9j6b6xb38b25347b6b.jpg&quot; alt=&quot;protected controller action&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That&amp;rsquo;s pretty much it, hopefully this will save you some time.  One thing that I&amp;rsquo;ve noticed in trying to make this work with the larger frameworks is that I really want some sort of implicit before filter.  I&amp;rsquo;d really like to have the redirect to &amp;lsquo;/sso/login&amp;rsquo; happen anytime an unauthenticated request comes in,  I&amp;rsquo;ll try to get that working in the next release.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;ve created an &lt;a href=&quot;http://github.com/atmos/hancock-client-rails&quot;&gt;example application&lt;/a&gt; that I&amp;rsquo;m hoping to keep up to date as hancock grows.  There are git tags that match up to a hancock release number as well.  If you want to see a rails client in action you can run &amp;ldquo;rake features&amp;rdquo; inside of the hancock-client-rails application.  You&amp;rsquo;ll need to be on a mac due to the &lt;a href=&quot;http://github.com/redsquirrel/safariwatir/tree/master&quot;&gt;safariwatir&lt;/a&gt; constraint but it should drive your browser and complete a full handshake against the &lt;a href=&quot;http://hancock.atmos.org&quot;&gt;hancock sso sandbox&lt;/a&gt;.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Hancock-Client : Sinatra Middleware</title>
+   <link href="http://www.atmos.org/2009/03/22/hancock-client-sinatra-middleware.html"/>
+   <updated>2009-03-22T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2009/03/22/hancock-client-sinatra-middleware</id>
+   <content type="html">&lt;p&gt;With the release of &lt;a href=&quot;http://sinatrarb.com&quot;&gt;sinatra&lt;/a&gt; version 0.9.1, programmers have the option to write micro-apps that double as middleware in any other &lt;a href=&quot;http://github.com/chneukirchen/rack/tree/master&quot;&gt;rack&lt;/a&gt; enabled application.  The beauty in this is that you can write rack middleware without getting bogged down in the details of writing rack directly.  Perhaps it&amp;rsquo;s your first time leveraging rack and you want to test the waters or perhaps you&amp;rsquo;re just wanting to slap a little bit of functionality onto someone else&amp;rsquo;s code; sinatra is emerging as a great way for folks to start really sinking their teeth into how rack functions.&lt;/p&gt;
+
+&lt;p&gt;I recently found myself waist-deep in rack.  A lot of my co-workers at &lt;a href=&quot;http://engineyard.com&quot;&gt;EY&lt;/a&gt; have been telling me for some time where rack made sense and where it didn&amp;rsquo;t.  I didn&amp;rsquo;t really grasp it all.  I understood it as a concept but there was nothing in my day to day work that made me say &amp;ldquo;Hey!  I&amp;rsquo;m gonna use rack here!&amp;rdquo;  At least until the other day.  &lt;a href=&quot;http://mwrc2009.confreaks.com/13-mar-2009-11-05-in-a-world-of-middleware-who-needs-monolithic-applications-jon-crosby.html&quot;&gt;Jon Crosby rocked out with a great talk at MWRC&lt;/a&gt; and one of &lt;a href=&quot;http://github.com/abcde&quot;&gt;my friends at work&lt;/a&gt; had written a little sinatra app that we needed to merge into our Single Sign On(SSO) infrastructure.  &lt;a href=&quot;http://github.com/halorgium&quot;&gt;Tim&lt;/a&gt; took advantage of an existing rack &lt;a href=&quot;http://openid.net&quot;&gt;openid&lt;/a&gt; library and made the necessary modifications to hook it in cleanly, he then went on vacation and left the gem abstraction to me.  I&amp;rsquo;m really grateful for this because it really made me sit down and acquaint myself with sinatra.  What I found was something pleasurable, elegant, and useful.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href=&quot;http://github.com/atmos/hancock-client&quot;&gt;hancock-client&lt;/a&gt; gem is an abstraction of our rack based SSO middleware in use at Engine Yard but modified to communicate with the &lt;a href=&quot;http://github.com/atmos/hancock/&quot;&gt;hancock sso server&lt;/a&gt;.  The gem provides a sinatra application that can be run as a standalone application or used as middleware in &lt;a href=&quot;http://rubyonrails.org&quot;&gt;rails&lt;/a&gt; or &lt;a href=&quot;http://merbivore.org&quot;&gt;merb&lt;/a&gt;.  The application itself encompasses all of the logic required to negotiate the SSO protocol with a provider and populate session variables.  You can pretty much expect that the sinatra app provided by the hancock-client gem will integrate well with a hancock provider of the same version.&lt;/p&gt;
+
+&lt;p&gt;So when I started trying to get the middleware going I decided on three things that were necessary for it:&lt;/p&gt;
+
+&lt;ul&gt;
+    &lt;li&gt;you need to be able to login&lt;/li&gt;
+    &lt;li&gt;you need to be able to logout&lt;/li&gt;
+    &lt;li&gt;after you login you should be greeted&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;This makes sense for the simplest possible consumer that does something useful.  The &lt;strong&gt;login&lt;/strong&gt; and &lt;strong&gt;logout&lt;/strong&gt; actions are mapped to &lt;strong&gt;/sso/login&lt;/strong&gt; and &lt;strong&gt;/sso/logout&lt;/strong&gt; respectively.  Does the &amp;ldquo;after you login you should be greeted&amp;rdquo; step really make sense for middleware though?  I feel like the answer is no in this situation and it&amp;rsquo;s where the beauty of rack really comes to light.  Since my code shares the same rack session that my framework code will share, maybe I should leave that greeting page up to the app that&amp;rsquo;s using the middleware.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://img.skitch.com/20090323-b69yget8ijmcs35ys8eqmsd1y4.jpg&quot; alt=&quot;Middleware&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The SSO middleware handles the authentication earlier in the stack than your framework and all you need to do is rely on a set of conventions that the middleware provides to the framework layer.  In the case of hancock-client it sets the &lt;strong&gt;:user_id&lt;/strong&gt; session variable.  Depending on your middleware ordering this happens way before your framework is hit.  The basic approach for the initial release of hancock-client went something like this, &amp;ldquo;only implement login and logout but provide examples of how you might use it in your framework of choice.&amp;rdquo;&lt;/p&gt;
+
+&lt;p&gt;What we created was a class that inherited from &lt;strong&gt;Sinatra::Default&lt;/strong&gt; called &lt;strong&gt;Hancock::Client::Default&lt;/strong&gt;.  This class was created with the idea that an application developer would inherit from it and implement the greeting page at &amp;ldquo;&lt;strong&gt;/&lt;/strong&gt;&amp;rdquo;.  So in its simplest form you can implement a hancock-client app in the following fashion:&lt;/p&gt;
+
+&lt;script src=&quot;http://gist.github.com/83061.js&quot;&gt;&lt;/script&gt;
+
+
+&lt;p&gt;Notice how the middleware can be extended to support requests to &lt;strong&gt;/&lt;/strong&gt; in sinatra with ease and you can simply let those requests pass through in frameworks that implement them at a higher level.&lt;/p&gt;
+
+&lt;p&gt;Notice the usage of the configuration option &lt;strong&gt;sso_url&lt;/strong&gt;.  You need to set this to the url of your SSO server.  If you ever need to reference this in the markup it&amp;rsquo;s available as &lt;strong&gt;options.sso_url&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;If you&amp;rsquo;re using this as middleware in other frameworks you&amp;rsquo;ll have to make sure that you set &lt;strong&gt;disable :raise_errors&lt;/strong&gt; on your &lt;strong&gt;Hancock::Client::Default&lt;/strong&gt; subclass.  Otherwise you&amp;rsquo;ll get 404s and that&amp;rsquo;s kind of annoying.  Checkout &lt;a href=&quot;http://blog.ra66i.org/&quot;&gt;raggi&lt;/a&gt;&amp;rsquo;s &lt;a href=&quot;http://gist.github.com/81199&quot;&gt;gist&lt;/a&gt; too.&lt;/p&gt;
+
+&lt;p&gt;Believe it or not, the standalone sinatra apps are hella useful.  I love when we want to try out some new 3rd party application that offers remote authentication and we can hook the two apps up with a simple sinatra app in no time.  Seriously, &lt;strong&gt;do not disregard sinatra&lt;/strong&gt; as a possible solution because you think you might need big feature X in framework Y.  Maybe you shouldn&amp;rsquo;t extend that monolith app that&amp;rsquo;s getting more complex by the day.  Maybe some micro-apps will be just what the doctor ordered. I might be crazy or living some sheltered developer lifestyle, but it is a pleasure to write sinatra code.&lt;/p&gt;
+
+&lt;p&gt;If you investigate the tests in hancock-client you&amp;rsquo;ll find that there aren&amp;rsquo;t many unit tests.  I think there&amp;rsquo;s 2 and one is currently pending.  If you checkout the cucumber tests though you&amp;rsquo;ll find &lt;a href=&quot;http://safariwatir.rubyforge.org/&quot;&gt;safariwatir&lt;/a&gt; tests that drive your browser and test against the &lt;a href=&quot;http://hancock.atmos.org&quot;&gt;hancock sso sandbox&lt;/a&gt;.  All you need to do is investigate the &lt;strong&gt;&lt;a href=&quot;http://github.com/atmos/hancock-client/blob/master/examples/dragon/config.ru&quot;&gt;examples/dragon&lt;/a&gt;&lt;/strong&gt; directory in hancock-client and run the following command.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;% rackup -p 4567 config.ru&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;In another terminal you should be able to run the following:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;% rake features&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;A browser should appear, you should see that you successfully signed up for an SSO account, and that your consumer application has access to a few session variables.  I chose safariwatir in this case because it allowed me to blackbox test the appserver and I chose cucumber because I was pretty sure I could copy this functionality over to merb and rails as I created examples for those frameworks.  If you&amp;rsquo;re on a mac, please try to run these specs and let me know if they work for you.&lt;/p&gt;
+
+&lt;p&gt;One thing that I&amp;rsquo;m really hoping to handle in the next release is the ability to make the SSO before filters in rails/merb a thing of the past.  I actually need to get the merb example working&amp;hellip;  If any of this interests you, you&amp;rsquo;re welcome to fork my projects on github or hook me up with patches.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Hancock : A Single Sign On Server in Sinatra</title>
+   <link href="http://www.atmos.org/2009/03/20/hancock-a-single-sign-on-server-in-sinatra.html"/>
+   <updated>2009-03-20T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2009/03/20/hancock-a-single-sign-on-server-in-sinatra</id>
+   <content type="html">&lt;p&gt;A while back I blogged about the &lt;a href=&quot;http://github.com/atmos/flatirons&quot;&gt;flatirons&lt;/a&gt; &lt;a href=&quot;http://openid.net&quot;&gt;openid&lt;/a&gt; provider and how it was inspired by something we were doing at Engine Yard.  We needed a single sign on provider and chose to use OpenID as the sso protocol.  Since this is heavily influenced by openid I will often use the word &amp;ldquo;&lt;strong&gt;provider&lt;/strong&gt;&amp;rdquo; to describe an SSO server.  I also use the word &amp;ldquo;&lt;strong&gt;consumer&lt;/strong&gt;&amp;rdquo; to describe an SSO enabled application.&lt;/p&gt;
+
+&lt;p&gt;So we pretty much drew up a diagram of how openid works and removed the steps we felt were unnecessary(decision/acceptance steps).  We then extended it by adding auto discovery of the openid url.  Here&amp;rsquo;s a somewhat up to date diagram that shows off how things work.  You&amp;rsquo;ll notice that the user-agent(browser) never specifies its identity url, it&amp;rsquo;s automatically provided from the SSO server.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://img.skitch.com/20090305-be6wwmbc4gfsi9euy3w7np31mm.jpg&quot; alt=&quot;hancock sso handshake&quot; height=&quot;500px&quot; width=&quot;475px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m pleased to announce a new piece of software that might interest you if you need a single sign on solution for your projects.  It&amp;rsquo;s called &lt;a href=&quot;http://github.com/atmos/hancock&quot;&gt;hancock&lt;/a&gt; and it&amp;rsquo;s available(like all good things) on &lt;a href=&quot;http://github.com&quot;&gt;github&lt;/a&gt;.  Here&amp;rsquo;s a quick run down of what it offers you:&lt;/p&gt;
+
+&lt;ul&gt;    &lt;li&gt;a rubygem that provides all the functionality you need for an sso server&lt;/li&gt;
+    &lt;li&gt;an sso server as an extendable sinatra app, aka rack middleware&lt;/li&gt;
+    &lt;li&gt;a required whitelist for consumer application access&lt;/li&gt;
+    &lt;li&gt;configurable sreg response parameters to customize what information is exposed to clients&lt;/li&gt;
+    &lt;li&gt;can hook into anything that &lt;a href=&quot;http://datamapper.org&quot;&gt;datamapper&lt;/a&gt; supports as a user/consumer store.&lt;/li&gt;
+    &lt;li&gt;trivial deployment as a rack application under passenger&lt;/li&gt;
+    &lt;li&gt;simple user signup with email verification&lt;/li&gt;
+        &lt;li&gt;application sessions don&#39;t overlap by using .domain.com style cookies&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;This is all implemented in about 400 lines of ruby code using the &lt;a href=&quot;http://sinatrarb.com&quot;&gt;sinatra&lt;/a&gt; framework.  With the release of Sinatra 0.9.1.1 programmers can write sinatra applications in a more modular fashion.  The killer feature is that these modular applications are actually &lt;a href=&quot;http://github.com/chneukirchen/rack/tree/master&quot;&gt;rack&lt;/a&gt; applications.  This allows for services to be written in sinatra that can be deployed as either a standalone rack application or used as middleware in frameworks like merb or rails.  Hancock is an example standalone rack application.  I&amp;rsquo;ll be blogging about sinatra as middleware in the days to come.&lt;/p&gt;
+
+&lt;p&gt;Hancock requires that you provide atleast three things to get it going.  This is normally provided in your rackup file.&lt;/p&gt;
+
+&lt;ul&gt;
+    &lt;li&gt;database connection info, specifically the &lt;a href=&quot;http://datamapper.org/doku.php?id=getting_started_with_datamapper#specify_your_database_connection&quot;&gt;datamapper connect string&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;mailer info&lt;/li&gt;
+    &lt;li&gt;a custom layout file&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;Hancock assumes that you&amp;rsquo;re going to provide the layout that gives your site its customized look and feel.  The hancock gem itself provides all of the forms for authentication.  If you&amp;rsquo;re going to be serving static assets like images, stylesheets, or javascript files you&amp;rsquo;ll also need to set the public attribute.  Here&amp;rsquo;s what my rackup file looks like on my server.&lt;/p&gt;
+
+&lt;script src=&quot;http://gist.github.com/82625.js&quot;&gt;&lt;/script&gt;
+
+
+&lt;p&gt;That&amp;rsquo;s your whole app.&lt;/p&gt;
+
+&lt;p&gt;The Hancock gem provides a sinatra application as a class named &lt;strong&gt;Hancock::App&lt;/strong&gt;.  You should inherit from this class and implement a landing page at &amp;ldquo;&lt;strong&gt;/&lt;/strong&gt;&amp;rdquo;.  The mailer configuration functions a lot like the merb-mailer gem, if you&amp;rsquo;re having issues google around for merb-mailer help.&lt;/p&gt;
+
+&lt;p&gt;The Hancock gem also provides a class named &lt;strong&gt;Hancock::Consumer&lt;/strong&gt; that represents a consumer application that is to be accepted by your hancock application.  The &lt;strong&gt;:url&lt;/strong&gt; attribute MUST match up to the return_to parameter in the openid negotiation.  If you&amp;rsquo;re using the &lt;a href=&quot;http://github.com/atmos/hancock-client&quot;&gt;hancock-client&lt;/a&gt; gem then it should take care of this for you.  The main thing to remember about this class is that if you ever receive the &lt;strong&gt;Forbidden&lt;/strong&gt; message on your SSO provider you should double check that the host is allowed to access the provider.&lt;/p&gt;
+
+&lt;p&gt;Your user model is exposed as &lt;strong&gt;Hancock::User&lt;/strong&gt;.  Right now there is simple sign up through web forms.  If you want to test the provider without setting up the full email configuration then you should run your application in development mode.  When run under development mode the registration url that would normally be sent via email is embedded as a comment.  I found that it made it really easy to test.&lt;/p&gt;
+
+&lt;p&gt;The Hancock gem doesn&amp;rsquo;t have perfect tests, but I&amp;rsquo;ll be damned if we aren&amp;rsquo;t shooting for it.  You&amp;rsquo;ll find both unit and acceptance tests done in &lt;a href=&quot;http://rspec.info&quot;&gt;rspec&lt;/a&gt;, &lt;a href=&quot;http://github.com/brynary/rack-test&quot;&gt;rack-test&lt;/a&gt;, &lt;a href=&quot;http://github.com/brynary/webrat&quot;&gt;webrat&lt;/a&gt;, and &lt;a href=&quot;http://github.com/aslakhellesoy/cucumber&quot;&gt;cucumber&lt;/a&gt;.  Even if you&amp;rsquo;re not interested in an SSO server the tests might help clarify a few things if you&amp;rsquo;re a testing junkie.&lt;/p&gt;
+
+&lt;p&gt;As I mentioned earlier, the killer feature of sinatra 0.9.1.1 is that sinatra apps are modular rack applications.  While hancock is a pretty cool example of the power and simplicity of sinatra; its use as middleware in other frameworks is where I expect to see sinatra shine for the foreseeable future.  Even if you&amp;rsquo;re stuck on a never ending rails project with no chance of innovation in sight, go learn about rack.  I think you&amp;rsquo;ll be surprised where you can start leveraging it.  Besides, writing sinatra is &lt;strong&gt;fun&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;So what good is a simple SSO server if you don&amp;rsquo;t have a super simple client library?  I bet if we did it as a &lt;a href=&quot;http://github.com/atmos/hancock-client&quot;&gt;simple sinatra app&lt;/a&gt; then we could turn it into middleware.  Then we could hook our &lt;a href=&quot;http://github.com/atmos/hancock-client-rails&quot;&gt;rails&lt;/a&gt; and &lt;a href=&quot;http://github.com/atmos/hancock-client-merb&quot;&gt;merb&lt;/a&gt; apps up.  Yeah, that&amp;rsquo;d be sweet.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m gonna follow this up in the next few days with something covering the &lt;a href=&quot;http://github.com/atmos/hancock-client&quot;&gt;hancock-client&lt;/a&gt; gem.  This gem provides a sinatra application that can be run standalone or as middleware in other apps.  I&amp;rsquo;ll prolly follow that up with two short articles on &amp;ldquo;how you get your middleware running in (rails|merb).&amp;rdquo;&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Creating a TDD Ruby Project</title>
+   <link href="http://www.atmos.org/2009/02/01/considerations-for-creating-a-test-driven-ruby-project.html"/>
+   <updated>2009-02-01T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2009/02/01/considerations-for-creating-a-test-driven-ruby-project</id>
+   <content type="html">&lt;h2&gt;Where this comes from&lt;/h2&gt;
+
+&lt;p&gt;I&amp;rsquo;d originally wanted to do something like &amp;ldquo;how our group at &lt;a
+href=&quot;http://engineyard.com&quot;&gt;EY&lt;/a&gt; specs things&amp;rdquo; but I feel like a lot of
+these ideas extend beyond the merb/rspec/datamapper bubble we currently develop
+in. When I went through the &lt;a href=&quot;http://integrityapp.com/&quot;&gt;Integrity&lt;/a&gt;
+source code a couple weeks ago I realized they were doing the same things, but
+with &lt;a href=&quot;http://sinatra.github.com/&quot;&gt;sinatra&lt;/a&gt;, &lt;a
+href=&quot;http://github.com/jeremymcanally/context/tree/master&quot;&gt;context&lt;/a&gt;, and &lt;a
+href=&quot;http://github.com/jeremymcanally/matchy/tree/master&quot;&gt;matchy&lt;/a&gt;.  I found
+it really easy to understand the integrity test suite because it was setup in a
+wonderfully sane manner.  I figured I&amp;rsquo;d share a few thoughts on it since I&amp;rsquo;d
+like to see more projects testing things like this.  There&amp;rsquo;s nothing earth
+shattering here,   In reality though, few projects I come across embrace
+developers to collaborate and enhance.  If you &lt;strong&gt;consider&lt;/strong&gt; these
+things while creating your project, I promise, you&amp;rsquo;ll be in a much better state
+to collaborate.&lt;/p&gt;
+
+&lt;p&gt;Here&amp;rsquo;s a few things that stick out in my mind:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;#readme&quot;&gt;You should have a README that tells another developer how to get up and running&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#testing&quot;&gt;You should really be testing, even if it&#39;s after the fact&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#naming_tests&quot;&gt;Name Your Tests/Specs after what it does&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#mocks&quot;&gt;Be able to toggle mocks and integration tests easily&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#github&quot;&gt;Use GitHub&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#ci&quot;&gt;How will this commit affect Continuous Integration?&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h2&gt;You should have a README that tells another developer how to get up and running&lt;/h2&gt;
+
+&lt;p&gt;If some random person needs to add a feature or fix a bug in your software,
+they&amp;rsquo;re prolly going to have to do some setup. Maintain this README. The
+easier it is to get a system bootstrapped to start developing and enhancing the
+software the better.  The old timers can send you a patch via email, the new
+schoolers send you &lt;a href=&quot;http://github.com/guides/pull-requests&quot;&gt;pull
+requests&lt;/a&gt;.  Let other people do some of the work for you. Even &lt;a
+href=&quot;http://twitter.com/drnic/statuses/952116463&quot;&gt;Dr Nic&lt;/a&gt; thinks it&amp;rsquo;s a
+good idea!&lt;/p&gt;
+
+&lt;h2&gt;You should really be testing, even if it&amp;rsquo;s after the fact&lt;/h2&gt;
+
+&lt;p&gt;I don&amp;rsquo;t care how fucking smart you are, software maintenance isn&amp;rsquo;t easy.  I&amp;rsquo;ve
+seen folks argue that &lt;a
+href=&quot;http://michaelfeathers.typepad.com/michael_feathers_blog/2008/06/the-flawed-theo.html&quot;&gt;unit
+testing is fail&lt;/a&gt;, I&amp;rsquo;m starting to agree when it comes to the web.  I&amp;rsquo;m
+finding that if you&amp;rsquo;re actually writing tests as you&amp;rsquo;re completing user stories
+you naturally exercise your models.  With a code coverage tool like &lt;a
+href=&quot;http://eigenclass.org/hiki.rb?rcov&quot;&gt;rcov&lt;/a&gt; you can really tell which
+portions of your models are being exercised fully.  If you know your stuff then
+you know that rcov coverage doesn&amp;rsquo;t really mean &lt;strong&gt;ALL&lt;/strong&gt; that much,
+but it helps.  You can then use a mutator like &lt;a
+href=&quot;https://github.com/ryansobol/heckle/tree/master&quot;&gt;heckle&lt;/a&gt; or &lt;a
+href=&quot;https://github.com/halorgium/boo_hiss/tree/master&quot;&gt;boo hiss&lt;/a&gt; to cover
+your ass for the rest of your cases.  We normally employ the mutators after
+we&amp;rsquo;re happy with the state of the software, it helps us prepare for handling
+weird errors in a more graceful manor.  You don&amp;rsquo;t have to go so far as to
+running mutators on your code, but you should &lt;strong&gt;really really&lt;/strong&gt; be
+testing.  If you don&amp;rsquo;t have time to test code, perhaps it&amp;rsquo;s time for you to
+&lt;strong&gt;TAKE THE TIME&lt;/strong&gt; to learn how to do it.  Your co-workers and
+friends will thank you for it, I promise.  Even if you develop software by
+changing code and refreshing your browser or running your script over and over,
+you owe it to your collaborators to let them know what portions of the code are
+important and what will cause major breakage if it changes.  By not testing
+you&amp;rsquo;re saying &amp;ldquo;I really don&amp;rsquo;t care whether or not this project lives a long,
+happy life.&amp;rdquo;&lt;/p&gt;
+
+&lt;h2&gt;Name Your Tests/Specs after what it does&lt;/h2&gt;
+
+&lt;p&gt;At the first &lt;a href=&quot;http://railsconf.org&quot;&gt;railsconf&lt;/a&gt; I remember &lt;a
+href=&quot;http://twitter.com/srbaker&quot;&gt;srbaker&lt;/a&gt; talking about rspec and how much
+he hated the way rails generators generated test files.  He told me something
+along the lines of &amp;ldquo;when I need to create a new spec I make it based on what
+it&amp;rsquo;s for.&amp;rdquo;  I didn&amp;rsquo;t really understand him at the time, I was still learning
+how to test via the rails framework.&lt;/p&gt;
+
+&lt;p&gt;&lt;img title=&quot;Checkout the names&quot; src=&quot;http://img.skitch.com/20090130-e75wm4neriiunbcc9k18dqk2n.jpg&quot; alt=&quot;Integrity and Braintree TR Slice&quot; width=&quot;554&quot; height=&quot;503&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In the images above you can easily identify what functionality has tests.  It
+annoys me to death when I open up spec/controllers/ and find specs named after
+classes.  They might be empty or they might be a giant file testing all of the
+functionality of the class in isolation, both cases suck.  I&amp;rsquo;m becoming more
+and more fond of just creating a spec file for a user story as I implement it.
+In the web space I think you should investigate &lt;a
+href=&quot;http://github.com/brynary/webrat/tree/master&quot;&gt;webrat&lt;/a&gt;, you can use it
+with merb, sinatra, or rails.  You&amp;rsquo;re basically writing acceptance tests that&amp;rsquo;s
+like a fake browser request with persistent sessions.  Name your acceptance
+tests according to what they validate and you&amp;rsquo;ll be in business.&lt;/p&gt;
+
+&lt;h2&gt;Be able to toggle mocks and integration tests easily&lt;/h2&gt;
+
+&lt;p&gt;We recently did a bunch of stuff with &lt;a
+href=&quot;http://dev.braintreepaymentsolutions.com/&quot;&gt;braintree&lt;/a&gt; for some payment
+processing.  They provide a pretty awesome &lt;strong&gt;&lt;a
+href=&quot;http://dev.braintreepaymentsolutions.com/test-transaction/&quot;&gt;test
+environment&lt;/a&gt;&lt;/strong&gt; for you to test against.  I wrote a whole bunch of
+specs that faked browser requests to the API server and I found their docs to
+be incorrect.  Their examples worked but once I got down to requiring CVVs and
+address verification, the response hashes came back inconsistently.  By really
+testing the requests/responses  I was able to dm this &lt;a
+href=&quot;http://twitter.com/ch0wda&quot;&gt;really awesome ruby developer on twitter&lt;/a&gt;
+and resolve the issue in a day or two, long before we ever went live.  If we&amp;rsquo;d
+generated mocks based on the documentation alone we would&amp;rsquo;ve gone live with a
+broken system.  You could argue that it&amp;rsquo;s braintree&amp;rsquo;s fault and they should
+have correct documentation, but I&amp;rsquo;m not a big fan of finger pointing. Finger
+pointing doesn&amp;rsquo;t accomplish a damn thing when you just launched a site and it&amp;rsquo;s
+not completely functional.  We&amp;rsquo;ve started shooting for something along the
+lines of &amp;ldquo;only mock things out if we can toggle a real integration test.&amp;rdquo;  Some
+of our apps could really use some mocking help, but the speed hit isn&amp;rsquo;t really
+that big of a deal when you know it&amp;rsquo;s really running against the remote
+service.  Of course my friend Tim has some ideas about &lt;a
+href=&quot;http://github.com/halorgium/mockz0r/tree/master&quot;&gt;mocks&lt;/a&gt; too.&lt;/p&gt;
+
+&lt;h2&gt;Use GitHub&lt;/h2&gt;
+
+&lt;p&gt;I use &lt;a href=&quot;http://whygitisbetterthanx.com/&quot;&gt;git&lt;/a&gt;, my homies at &lt;a
+href=&quot;http://github.com&quot;&gt;GitHub&lt;/a&gt; get it.  It&amp;rsquo;s all I&amp;rsquo;ve been using since
+February of 2008.  I really can&amp;rsquo;t say enough good things about github, it
+really simplifies things when collaborating on software.&lt;/p&gt;
+
+&lt;h2&gt;How will this commit affect Continuous Integration?&lt;/h2&gt;
+
+&lt;p&gt;You do use continuous integration, right?  Continuous Integration is just a
+remote machine that runs your test suite every time someone pushes code.  I use
+&lt;a href=&quot;http://integrityapp.com/&quot;&gt;Integrity&lt;/a&gt;, some of my friends use &lt;a
+href=&quot;http://cruisecontrolrb.thoughtworks.com/&quot;&gt;cc.rb&lt;/a&gt;.  Integrity works
+&lt;strong&gt;really frackin&#39; well&lt;/strong&gt; with &lt;a
+href=&quot;http://github.com/guides/post-receive-hooks&quot;&gt;github&lt;/a&gt;, all of my code
+lives there so it makes it that much more attractive.  If I push some code, how
+will my CI task handle installing any new dependencies I introduced?  Will my
+co-workers want to punch me in the face because half of their day was wasted
+tracking down some shit I committed?  How well do these changes work outside of
+my machine?  This is stuff that you really want to consider when you
+collaborate.&lt;/p&gt;
+
+&lt;h2&gt;Collaboration is King&lt;/h2&gt;
+
+&lt;p&gt;Collaboration keeps bubbling to the surface here.  Perhaps I should change the
+title.  These suggestions have little merit if you&amp;rsquo;re not interested in
+collaborating on software.  If you&amp;rsquo;re not interested in collaborating on
+software though, you&amp;rsquo;re going the way of the dodo.  Think of all the awesome
+techniques you picked up from working with other people.  Think of all the
+projects you tried to use or hack on but couldn&amp;rsquo;t because you couldn&amp;rsquo;t get it
+working.  It&amp;rsquo;s up to you to make your projects easy to collaborate on.&lt;/p&gt;
+
+&lt;p&gt;So, what&amp;rsquo;d I forget to mention?&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>nginx proxying down to your mongrels</title>
+   <link href="http://www.atmos.org/2006/08/23/nginx-proxying-down-to-your-mongrels.html"/>
+   <updated>2006-08-23T00:00:00+08:00</updated>
+   <id>http://www.atmos.org/2006/08/23/nginx-proxying-down-to-your-mongrels</id>
+   <content type="html">&lt;p&gt;&lt;a href=&quot;http://brainspl.at&quot;&gt;Ezra&lt;/a&gt; was going on and on about this &lt;a href=&quot;http://sysoev.ru/en/&quot;&gt;nginx&lt;/a&gt; things on &lt;span class=&quot;caps&quot;&gt;IRC&lt;/span&gt; today.  Saying how it was &amp;#8220;super light and fast webserver with really good(better than pound) proxy module.&amp;#8221;  I had an app I wanted to setup a &lt;a href=&quot;http://mongrel.rubyforge.org/docs/mongrel_cluster.html&quot;&gt;mongrel_cluster&lt;/a&gt; for at work, and when he gave a &lt;a href=&quot;http://pastie.caboo.se/9734&quot;&gt;pastie like this&lt;/a&gt; I figured I&amp;#8217;d give it a try.  It took all of 5 minutes to be up and running.  It &lt;strong&gt;seems&lt;/strong&gt; fine for the time being, I&amp;#8217;ll find out tomorrow when more users start hitting it.  One thing that was weird was I couldn&amp;#8217;t start it on a high port as an unprivileged user.  You &lt;span class=&quot;caps&quot;&gt;CAN&lt;/span&gt; however start it with sudo, set the user in your config file, and it seems to setuid properly.  Thanks Ezra!&lt;/p&gt;
+&lt;p&gt;My friend Kevin at work shared &lt;a href=&quot;http://blog.kovyrin.net/2006/04/04/nginx-small-powerful-web-server/&quot;&gt;this link&lt;/a&gt; this morning, which covers a few of the cool features it offers.&lt;/p&gt;</content>
+ </entry>
+ 
+
+</feed>

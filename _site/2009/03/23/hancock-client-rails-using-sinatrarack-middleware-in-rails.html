@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Hancock-Client-Rails: Works with Rails > 2.3.x</title>
+
+    <link rel="stylesheet" href="https://github.com/themes/minimal/stylesheets/styles.css">
+    <style>
+      header { zoom: 1.2; }
+      header h1 { margin-bottom: 5px; }
+      header h1 a { color: #494949; font-weight: bold; }
+      header h3 { margin-top: 20px; margin-bottom: 5px; }
+      header p.view { margin-bottom: 5px; }
+      header p.view small { padding-top: 2px; }
+      header ul {
+        zoom: 0.7;
+        margin-top: 25px;
+      }
+      section p { margin-top: 10px; }
+      section h1 { margin-bottom: 15px; }
+      section h2 { margin-bottom: 10px; }
+      section h2 { margin-bottom: 10px; }
+      footer { bottom: 20px; }
+      footer p { margin-bottom: 5px; }
+      .half-width {
+        float: left;
+        width: 200px;
+        list-style: none;
+        padding: 5px;
+        margin: 7px;
+        margin-bottom: 10px;
+      }
+      .half-width h4 {
+        margin-bottom: 5px;
+      }
+      .half-width ul {
+        padding-left: 0;
+      }
+      .half-width ul li {
+        list-style: inside;
+        font-size: 15px;
+      }
+      .clear-fix {
+        clear: both;
+      }
+    </style>
+    <script src="https://github.com/themes/minimal/javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1><a href="/">atmos.org</a></h1>
+        <!-- <p>Where's Corey now?</p> -->
+
+        <!-- <h3>The Goods</h3> -->
+        <p class="view"><a href="/projects.html">Open Source Projects<small>Code that Might be Useful to You</small></a></p>
+        <p class="view"><a href="/speaking.html">Talks I've Given<small>On Technologies and Ideas</small></a></p>
+
+        
+
+        <h3>Follow Me On</h3>
+        <p class="view"><a href="https://github.com/atmos" target="tab">GitHub<small>If coding is your thing</small></a></li>
+        <p class="view"><a href="https://twitter.com/atmos" target="tab">Twitter<small>If you tweet</small></a></li>
+        <p class="view"><a href="http://tumblr.atmos.org" target="tab">Tumblr<small>If you're ADD</small></a></li>
+        <p class="view"><a href="http://flickr.com/photos/atmos" target="tab">Flickr<small>If you like photos</small></a></li>
+
+      </header>
+      <section id="main">
+        <article>
+<h1>Hancock-Client-Rails: Works with Rails > 2.3.x</h1>
+<hr/>
+<p>Recently I&rsquo;ve been writing a bunch about <a href="http://sinatrarb.com">sinatra</a> as middleware and one of the things you always hear people glorifying is how rack middleware can be dropped into any framework that&rsquo;s built on rack.  Since I&rsquo;m trying to get people to try <a href="http://github.com/atmos/hancock">hancock</a> out, or atleast learn something from it, I figured I should investigate how you actually use the <a href="http://github.com/atmos/hancock-client">hancock-client</a> sinatra app inside off rails 2.3.2.</p>
+
+<p>One of the examples I&rsquo;ve seen in quite a few presentations on using middleware in rack has something along the lines of:</p>
+
+<p><img src="http://img.skitch.com/20090323-m4hba3yiqxdsupf389t8fxt4i3.jpg" alt="middleware" /></p>
+
+<p>Unfortunately, I&rsquo;ve yet to get a sample like this working with sinatra middleware.  For some reason sinatra always throws 404 errors instead of allowing those requests to pass through to rails.  Even if I set &ldquo;disable :raise_errors&rdquo; in my sinatra app, it&rsquo;d still throw 404s.  So after a little googling I discovered a wonderful write up over at the <a href="http://guides.rubyonrails.org/rails_on_rack.html">rails on rack</a> page.  I definitely learned a lot about how rails middleware works but I still couldn&rsquo;t get my sinatra app functioning properly inside of rails.</p>
+
+<p>I was kind of surprised to find out that there was very little documentation on using sinatra as middleware.  Sinatra is awesome for this, how could I be the first person trying to do this?  It turns out that I wasn&rsquo;t. :)  <a href="http://blog.ra66i.org/">Raggi</a> had explained how to do this to someone in #rack on freenode a few days earlier.  I looked through his <a href="http://gist.github.com/81199">gist on how he did it</a>.  I didn&rsquo;t understand it all but I hadn&rsquo;t tried using the metal generator that rails introduced recently.  So I gave that a try and ended up with a piece of rails metal that looks like this.</p>
+
+<p><img src="http://img.skitch.com/20090323-bw211t8spchuk6hu6tmxp7qu94.jpg" alt="hancock metal" /></p>
+
+<p>This actually worked perfectly for me.  All I needed to do was make a subclass of Hancock::Client::Default and set the appropriate configuration options.  Next I gave myself a little helper in application.rb to check whether I was logged in or not, you&rsquo;ve probably done something like this in every other app you&rsquo;ve ever used.</p>
+
+<p><img src="http://img.skitch.com/20090323-d1qrceyie3xme7ktf54sqccd28.jpg" alt="logged_in helper" /></p>
+
+<p>Then there&rsquo;s a simple controller that should be protected by the SSO middleware.</p>
+
+<p><img src="http://img.skitch.com/20090323-nhhtb1wb9j6b6xb38b25347b6b.jpg" alt="protected controller action" /></p>
+
+<p>That&rsquo;s pretty much it, hopefully this will save you some time.  One thing that I&rsquo;ve noticed in trying to make this work with the larger frameworks is that I really want some sort of implicit before filter.  I&rsquo;d really like to have the redirect to &lsquo;/sso/login&rsquo; happen anytime an unauthenticated request comes in,  I&rsquo;ll try to get that working in the next release.</p>
+
+<p>I&rsquo;ve created an <a href="http://github.com/atmos/hancock-client-rails">example application</a> that I&rsquo;m hoping to keep up to date as hancock grows.  There are git tags that match up to a hancock release number as well.  If you want to see a rails client in action you can run &ldquo;rake features&rdquo; inside of the hancock-client-rails application.  You&rsquo;ll need to be on a mac due to the <a href="http://github.com/redsquirrel/safariwatir/tree/master">safariwatir</a> constraint but it should drive your browser and complete a full handshake against the <a href="http://hancock.atmos.org">hancock sso sandbox</a>.</p>
+
+</article>
+
+      </section>
+      <footer>
+        <!-- <p>This is the site of Corey Donohoe</p> -->
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+
+    <script type="text/javascript">
+      var _gauges = _gauges || [];
+      (function() {
+        var t   = document.createElement('script');
+        t.type  = 'text/javascript';
+        t.async = true;
+        t.id    = 'gauges-tracker';
+        t.setAttribute('data-site-id', '4eb74c9f613f5d3567000004');
+        t.src = '//secure.gaug.es/track.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(t, s);
+      })();
+    </script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="js/libs/jquery-1.6.2.min.js"><\/script>')</script>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>

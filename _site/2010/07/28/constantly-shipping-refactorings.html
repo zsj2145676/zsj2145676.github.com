@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Constantly Shipping Refactorings</title>
+
+    <link rel="stylesheet" href="https://github.com/themes/minimal/stylesheets/styles.css">
+    <style>
+      header { zoom: 1.2; }
+      header h1 { margin-bottom: 5px; }
+      header h1 a { color: #494949; font-weight: bold; }
+      header h3 { margin-top: 20px; margin-bottom: 5px; }
+      header p.view { margin-bottom: 5px; }
+      header p.view small { padding-top: 2px; }
+      header ul {
+        zoom: 0.7;
+        margin-top: 25px;
+      }
+      section p { margin-top: 10px; }
+      section h1 { margin-bottom: 15px; }
+      section h2 { margin-bottom: 10px; }
+      section h2 { margin-bottom: 10px; }
+      footer { bottom: 20px; }
+      footer p { margin-bottom: 5px; }
+      .half-width {
+        float: left;
+        width: 200px;
+        list-style: none;
+        padding: 5px;
+        margin: 7px;
+        margin-bottom: 10px;
+      }
+      .half-width h4 {
+        margin-bottom: 5px;
+      }
+      .half-width ul {
+        padding-left: 0;
+      }
+      .half-width ul li {
+        list-style: inside;
+        font-size: 15px;
+      }
+      .clear-fix {
+        clear: both;
+      }
+    </style>
+    <script src="https://github.com/themes/minimal/javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1><a href="/">atmos.org</a></h1>
+        <!-- <p>Where's Corey now?</p> -->
+
+        <!-- <h3>The Goods</h3> -->
+        <p class="view"><a href="/projects.html">Open Source Projects<small>Code that Might be Useful to You</small></a></p>
+        <p class="view"><a href="/speaking.html">Talks I've Given<small>On Technologies and Ideas</small></a></p>
+
+        
+
+        <h3>Follow Me On</h3>
+        <p class="view"><a href="https://github.com/atmos" target="tab">GitHub<small>If coding is your thing</small></a></li>
+        <p class="view"><a href="https://twitter.com/atmos" target="tab">Twitter<small>If you tweet</small></a></li>
+        <p class="view"><a href="http://tumblr.atmos.org" target="tab">Tumblr<small>If you're ADD</small></a></li>
+        <p class="view"><a href="http://flickr.com/photos/atmos" target="tab">Flickr<small>If you like photos</small></a></li>
+
+      </header>
+      <section id="main">
+        <article>
+<h1>Constantly Shipping Refactorings</h1>
+<hr/>
+<p>Recently, two of my favorite hackers, <a href="http://github.com/martinemde">Martin</a> and <a href="http://github.com/halorgium">Tim</a>, have been working on a
+pretty big refactoring in cloud.  In the past our team probably would&rsquo;ve
+worked in a topic branch for a few weeks, followed by a painful
+rebase/merge, followed by a deployment we really hoped we got right.  Since
+this refactor requires db schema changes, we&rsquo;d prolly have to take the site
+down for at least a few minutes to do it.  They didn&rsquo;t want to do it this, so
+they approached the problem in a new way (to us).  Here&rsquo;s what they&rsquo;re doing.</p>
+
+<h2>Unicorn and Zero Downtime Migrations with DataMapper</h2>
+
+<p>We moved to unicorn the other month and have found the 0 downtime deploys
+really liberating.  If something is ready to go out to customers, we ship it.
+We have no planned day of the week or time of day that we ship.  On weekdays we
+normally ship 5-6 times a day and no one ever notices.  DB schema changes currently
+make things a little more difficult. When you add a new model, you create a
+migration for it, and you ship the model with the migration.  This
+is where Martin and Tim tried something new.  Instead of coupling the migration
+and the model addition, they&rsquo;re doing the migrations before the model is
+introduced to the system.</p>
+
+<h2>Adding a New Model</h2>
+
+<p>So the other day they added a new model, let&rsquo;s call it User.
+When they wanted to introduce the User model, they did it in
+two releases. In the first release they shipped a zero downtime deploy to
+add the users table. The first release didn&rsquo;t take advantage of
+the user model, it was just a normal deploy with the migrations running AFTER
+the unicorn processes had restarted. In the second release they shipped the
+User model in another zero downtime deploy that actually started USING the users
+tabel. Adding a table is pretty trivial if you think about it, but what about removing a column?</p>
+
+<h2>Data Transformation/Migration</h2>
+
+<p>Have you ever had to rollback a deployment that had data migrations?  You need
+to go find your latest database backup, restore that, extend the outage you
+took because you hadn&rsquo;t planned on things going south.  It&rsquo;s insanely stressful
+and makes you look like a jackass to your co-workers.  Your customers won&rsquo;t like
+it either.</p>
+
+<h2>Removing a Column from a Model</h2>
+
+<p>Let&rsquo;s say that during the refactoring they discovered some insanity in our
+system: tokens in two places, one on the User model and one on the
+associated class Customer.  First deployment they tracked down all the places
+where the attribute, in this case &lsquo;token&rsquo;, was accessed directly and removed
+it.</p>
+
+<p>Here&rsquo;s an example of the User class before the changes:</p>
+
+<pre><code>class User
+  include DataMapper::Resource
+
+  property :id,              Serial
+  property :token,           String, :required =&gt; true,
+  belongs_to :customer,      Integer
+
+  def valid_token?
+    token == some_token_verification_method
+  end
+end
+</code></pre>
+
+<p>Here&rsquo;s an example of the User class after the changes:</p>
+
+<pre><code>class User
+  include DataMapper::Resource
+
+  property :id,              Serial
+  belongs_to :customer,      Integer
+
+  def valid_token?
+    customer.token == some_token_verification_method
+  end
+end
+</code></pre>
+
+<p>When this code deploys, the User table still has the token field.
+Shortly after that, they shipped another release with a migration that only
+removed the newly unused column. Again, 0 downtime.  Guess how we do
+tables?  The same way.</p>
+
+<h2>Renaming a column</h2>
+
+<p>Renaming a column is kinda weird because it takes 4 deploys.  On the first deploy,
+create the new, unused column.
+On the second deploy, introduce code that starts using the new column and
+denormalizes the attributes as they&rsquo;re accessed. This deploy also carries a zero downtime migration that copies the attribute over to the new column. All access to the attribute is now directed to the correct column. On the third deploy, remove all reference to the old
+column. Finally on the fourth deploy, nuke the old column after the deploy
+completes.  For an example of how the new column usage works, check this snippet out.</p>
+
+<pre><code>class User
+  include DataMapper::Resource
+
+  property :id,              Serial
+  property :token,           String, :required =&gt; true,
+  property :tos_accepted,    Boolean, :default  =&gt; false
+  property :admin,           Boolean, :default  =&gt; false
+  property :administrator,   Boolean, :default  =&gt; false
+
+  timestamps :at
+
+  def admin
+    value = attribute_get(:admin)
+    value.nil? ? copy_admin : value
+  end
+
+  def admin?
+    admin
+  end
+
+  def copy_admin
+    unless update(:admin =&gt; adminstrator)
+      raise "Could not save user: #{errors.full_messages.join(", ")}"
+    end
+    admin
+  end
+end
+</code></pre>
+
+<h2>It&rsquo;s so simple, who cares?</h2>
+
+<p>One thing I really love about this is the guys are constantly shipping
+incremental improvements.  There won&rsquo;t be an evening where they&rsquo;re forced to
+work late to ship out their schema changes.  You&rsquo;ll never hear them cursing
+other developers for introducing changes that mess with their refactoring.
+Even though they&rsquo;re focused on a very large refactoring, they&rsquo;re never a few
+days off from having something to show.  You can watch their progress as the
+commits flow by.  They never entered the mindset that it&rsquo;s ok to get lost in
+refactoring wonderland.  Solving a problem elegantly doesn&rsquo;t mean you have to
+go sit and think up the most beautiful solution ever. Break it down into little
+pieces and ship &lsquo;em.</p>
+
+<p>Tim, Martin, and I are in the process of automating these kinds of rollouts. We&rsquo;re testing it right now.</p>
+
+<h2>Hiring</h2>
+
+<p>We&rsquo;re also <a href="http://www.engineyard.com/company/careers/ruby-engineers">hiring right now</a>.  Send <a href="http://github.com/atmos">me</a> a message on <a href="http://github.com">github</a> if you&rsquo;re
+interested in working with a top notch group of hackers.</p>
+
+</article>
+
+      </section>
+      <footer>
+        <!-- <p>This is the site of Corey Donohoe</p> -->
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+
+    <script type="text/javascript">
+      var _gauges = _gauges || [];
+      (function() {
+        var t   = document.createElement('script');
+        t.type  = 'text/javascript';
+        t.async = true;
+        t.id    = 'gauges-tracker';
+        t.setAttribute('data-site-id', '4eb74c9f613f5d3567000004');
+        t.src = '//secure.gaug.es/track.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(t, s);
+      })();
+    </script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="js/libs/jquery-1.6.2.min.js"><\/script>')</script>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>

@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Creating a TDD Ruby Project</title>
+
+    <link rel="stylesheet" href="https://github.com/themes/minimal/stylesheets/styles.css">
+    <style>
+      header { zoom: 1.2; }
+      header h1 { margin-bottom: 5px; }
+      header h1 a { color: #494949; font-weight: bold; }
+      header h3 { margin-top: 20px; margin-bottom: 5px; }
+      header p.view { margin-bottom: 5px; }
+      header p.view small { padding-top: 2px; }
+      header ul {
+        zoom: 0.7;
+        margin-top: 25px;
+      }
+      section p { margin-top: 10px; }
+      section h1 { margin-bottom: 15px; }
+      section h2 { margin-bottom: 10px; }
+      section h2 { margin-bottom: 10px; }
+      footer { bottom: 20px; }
+      footer p { margin-bottom: 5px; }
+      .half-width {
+        float: left;
+        width: 200px;
+        list-style: none;
+        padding: 5px;
+        margin: 7px;
+        margin-bottom: 10px;
+      }
+      .half-width h4 {
+        margin-bottom: 5px;
+      }
+      .half-width ul {
+        padding-left: 0;
+      }
+      .half-width ul li {
+        list-style: inside;
+        font-size: 15px;
+      }
+      .clear-fix {
+        clear: both;
+      }
+    </style>
+    <script src="https://github.com/themes/minimal/javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1><a href="/">atmos.org</a></h1>
+        <!-- <p>Where's Corey now?</p> -->
+
+        <!-- <h3>The Goods</h3> -->
+        <p class="view"><a href="/projects.html">Open Source Projects<small>Code that Might be Useful to You</small></a></p>
+        <p class="view"><a href="/speaking.html">Talks I've Given<small>On Technologies and Ideas</small></a></p>
+
+        
+
+        <h3>Follow Me On</h3>
+        <p class="view"><a href="https://github.com/atmos" target="tab">GitHub<small>If coding is your thing</small></a></li>
+        <p class="view"><a href="https://twitter.com/atmos" target="tab">Twitter<small>If you tweet</small></a></li>
+        <p class="view"><a href="http://tumblr.atmos.org" target="tab">Tumblr<small>If you're ADD</small></a></li>
+        <p class="view"><a href="http://flickr.com/photos/atmos" target="tab">Flickr<small>If you like photos</small></a></li>
+
+      </header>
+      <section id="main">
+        <article>
+<h1>Creating a TDD Ruby Project</h1>
+<hr/>
+<h2>Where this comes from</h2>
+
+<p>I&rsquo;d originally wanted to do something like &ldquo;how our group at <a
+href="http://engineyard.com">EY</a> specs things&rdquo; but I feel like a lot of
+these ideas extend beyond the merb/rspec/datamapper bubble we currently develop
+in. When I went through the <a href="http://integrityapp.com/">Integrity</a>
+source code a couple weeks ago I realized they were doing the same things, but
+with <a href="http://sinatra.github.com/">sinatra</a>, <a
+href="http://github.com/jeremymcanally/context/tree/master">context</a>, and <a
+href="http://github.com/jeremymcanally/matchy/tree/master">matchy</a>.  I found
+it really easy to understand the integrity test suite because it was setup in a
+wonderfully sane manner.  I figured I&rsquo;d share a few thoughts on it since I&rsquo;d
+like to see more projects testing things like this.  There&rsquo;s nothing earth
+shattering here,   In reality though, few projects I come across embrace
+developers to collaborate and enhance.  If you <strong>consider</strong> these
+things while creating your project, I promise, you&rsquo;ll be in a much better state
+to collaborate.</p>
+
+<p>Here&rsquo;s a few things that stick out in my mind:</p>
+
+<ul>
+  <li><a href="#readme">You should have a README that tells another developer how to get up and running</a></li>
+  <li><a href="#testing">You should really be testing, even if it's after the fact</a></li>
+  <li><a href="#naming_tests">Name Your Tests/Specs after what it does</a></li>
+  <li><a href="#mocks">Be able to toggle mocks and integration tests easily</a></li>
+  <li><a href="#github">Use GitHub</a></li>
+  <li><a href="#ci">How will this commit affect Continuous Integration?</a></li>
+</ul>
+
+
+<h2>You should have a README that tells another developer how to get up and running</h2>
+
+<p>If some random person needs to add a feature or fix a bug in your software,
+they&rsquo;re prolly going to have to do some setup. Maintain this README. The
+easier it is to get a system bootstrapped to start developing and enhancing the
+software the better.  The old timers can send you a patch via email, the new
+schoolers send you <a href="http://github.com/guides/pull-requests">pull
+requests</a>.  Let other people do some of the work for you. Even <a
+href="http://twitter.com/drnic/statuses/952116463">Dr Nic</a> thinks it&rsquo;s a
+good idea!</p>
+
+<h2>You should really be testing, even if it&rsquo;s after the fact</h2>
+
+<p>I don&rsquo;t care how fucking smart you are, software maintenance isn&rsquo;t easy.  I&rsquo;ve
+seen folks argue that <a
+href="http://michaelfeathers.typepad.com/michael_feathers_blog/2008/06/the-flawed-theo.html">unit
+testing is fail</a>, I&rsquo;m starting to agree when it comes to the web.  I&rsquo;m
+finding that if you&rsquo;re actually writing tests as you&rsquo;re completing user stories
+you naturally exercise your models.  With a code coverage tool like <a
+href="http://eigenclass.org/hiki.rb?rcov">rcov</a> you can really tell which
+portions of your models are being exercised fully.  If you know your stuff then
+you know that rcov coverage doesn&rsquo;t really mean <strong>ALL</strong> that much,
+but it helps.  You can then use a mutator like <a
+href="https://github.com/ryansobol/heckle/tree/master">heckle</a> or <a
+href="https://github.com/halorgium/boo_hiss/tree/master">boo hiss</a> to cover
+your ass for the rest of your cases.  We normally employ the mutators after
+we&rsquo;re happy with the state of the software, it helps us prepare for handling
+weird errors in a more graceful manor.  You don&rsquo;t have to go so far as to
+running mutators on your code, but you should <strong>really really</strong> be
+testing.  If you don&rsquo;t have time to test code, perhaps it&rsquo;s time for you to
+<strong>TAKE THE TIME</strong> to learn how to do it.  Your co-workers and
+friends will thank you for it, I promise.  Even if you develop software by
+changing code and refreshing your browser or running your script over and over,
+you owe it to your collaborators to let them know what portions of the code are
+important and what will cause major breakage if it changes.  By not testing
+you&rsquo;re saying &ldquo;I really don&rsquo;t care whether or not this project lives a long,
+happy life.&rdquo;</p>
+
+<h2>Name Your Tests/Specs after what it does</h2>
+
+<p>At the first <a href="http://railsconf.org">railsconf</a> I remember <a
+href="http://twitter.com/srbaker">srbaker</a> talking about rspec and how much
+he hated the way rails generators generated test files.  He told me something
+along the lines of &ldquo;when I need to create a new spec I make it based on what
+it&rsquo;s for.&rdquo;  I didn&rsquo;t really understand him at the time, I was still learning
+how to test via the rails framework.</p>
+
+<p><img title="Checkout the names" src="http://img.skitch.com/20090130-e75wm4neriiunbcc9k18dqk2n.jpg" alt="Integrity and Braintree TR Slice" width="554" height="503" /></p>
+
+<p>In the images above you can easily identify what functionality has tests.  It
+annoys me to death when I open up spec/controllers/ and find specs named after
+classes.  They might be empty or they might be a giant file testing all of the
+functionality of the class in isolation, both cases suck.  I&rsquo;m becoming more
+and more fond of just creating a spec file for a user story as I implement it.
+In the web space I think you should investigate <a
+href="http://github.com/brynary/webrat/tree/master">webrat</a>, you can use it
+with merb, sinatra, or rails.  You&rsquo;re basically writing acceptance tests that&rsquo;s
+like a fake browser request with persistent sessions.  Name your acceptance
+tests according to what they validate and you&rsquo;ll be in business.</p>
+
+<h2>Be able to toggle mocks and integration tests easily</h2>
+
+<p>We recently did a bunch of stuff with <a
+href="http://dev.braintreepaymentsolutions.com/">braintree</a> for some payment
+processing.  They provide a pretty awesome <strong><a
+href="http://dev.braintreepaymentsolutions.com/test-transaction/">test
+environment</a></strong> for you to test against.  I wrote a whole bunch of
+specs that faked browser requests to the API server and I found their docs to
+be incorrect.  Their examples worked but once I got down to requiring CVVs and
+address verification, the response hashes came back inconsistently.  By really
+testing the requests/responses  I was able to dm this <a
+href="http://twitter.com/ch0wda">really awesome ruby developer on twitter</a>
+and resolve the issue in a day or two, long before we ever went live.  If we&rsquo;d
+generated mocks based on the documentation alone we would&rsquo;ve gone live with a
+broken system.  You could argue that it&rsquo;s braintree&rsquo;s fault and they should
+have correct documentation, but I&rsquo;m not a big fan of finger pointing. Finger
+pointing doesn&rsquo;t accomplish a damn thing when you just launched a site and it&rsquo;s
+not completely functional.  We&rsquo;ve started shooting for something along the
+lines of &ldquo;only mock things out if we can toggle a real integration test.&rdquo;  Some
+of our apps could really use some mocking help, but the speed hit isn&rsquo;t really
+that big of a deal when you know it&rsquo;s really running against the remote
+service.  Of course my friend Tim has some ideas about <a
+href="http://github.com/halorgium/mockz0r/tree/master">mocks</a> too.</p>
+
+<h2>Use GitHub</h2>
+
+<p>I use <a href="http://whygitisbetterthanx.com/">git</a>, my homies at <a
+href="http://github.com">GitHub</a> get it.  It&rsquo;s all I&rsquo;ve been using since
+February of 2008.  I really can&rsquo;t say enough good things about github, it
+really simplifies things when collaborating on software.</p>
+
+<h2>How will this commit affect Continuous Integration?</h2>
+
+<p>You do use continuous integration, right?  Continuous Integration is just a
+remote machine that runs your test suite every time someone pushes code.  I use
+<a href="http://integrityapp.com/">Integrity</a>, some of my friends use <a
+href="http://cruisecontrolrb.thoughtworks.com/">cc.rb</a>.  Integrity works
+<strong>really frackin' well</strong> with <a
+href="http://github.com/guides/post-receive-hooks">github</a>, all of my code
+lives there so it makes it that much more attractive.  If I push some code, how
+will my CI task handle installing any new dependencies I introduced?  Will my
+co-workers want to punch me in the face because half of their day was wasted
+tracking down some shit I committed?  How well do these changes work outside of
+my machine?  This is stuff that you really want to consider when you
+collaborate.</p>
+
+<h2>Collaboration is King</h2>
+
+<p>Collaboration keeps bubbling to the surface here.  Perhaps I should change the
+title.  These suggestions have little merit if you&rsquo;re not interested in
+collaborating on software.  If you&rsquo;re not interested in collaborating on
+software though, you&rsquo;re going the way of the dodo.  Think of all the awesome
+techniques you picked up from working with other people.  Think of all the
+projects you tried to use or hack on but couldn&rsquo;t because you couldn&rsquo;t get it
+working.  It&rsquo;s up to you to make your projects easy to collaborate on.</p>
+
+<p>So, what&rsquo;d I forget to mention?</p>
+
+</article>
+
+      </section>
+      <footer>
+        <!-- <p>This is the site of Corey Donohoe</p> -->
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+
+    <script type="text/javascript">
+      var _gauges = _gauges || [];
+      (function() {
+        var t   = document.createElement('script');
+        t.type  = 'text/javascript';
+        t.async = true;
+        t.id    = 'gauges-tracker';
+        t.setAttribute('data-site-id', '4eb74c9f613f5d3567000004');
+        t.src = '//secure.gaug.es/track.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(t, s);
+      })();
+    </script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="js/libs/jquery-1.6.2.min.js"><\/script>')</script>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>

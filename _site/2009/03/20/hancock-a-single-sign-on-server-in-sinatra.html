@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Hancock : A Single Sign On Server in Sinatra</title>
+
+    <link rel="stylesheet" href="https://github.com/themes/minimal/stylesheets/styles.css">
+    <style>
+      header { zoom: 1.2; }
+      header h1 { margin-bottom: 5px; }
+      header h1 a { color: #494949; font-weight: bold; }
+      header h3 { margin-top: 20px; margin-bottom: 5px; }
+      header p.view { margin-bottom: 5px; }
+      header p.view small { padding-top: 2px; }
+      header ul {
+        zoom: 0.7;
+        margin-top: 25px;
+      }
+      section p { margin-top: 10px; }
+      section h1 { margin-bottom: 15px; }
+      section h2 { margin-bottom: 10px; }
+      section h2 { margin-bottom: 10px; }
+      footer { bottom: 20px; }
+      footer p { margin-bottom: 5px; }
+      .half-width {
+        float: left;
+        width: 200px;
+        list-style: none;
+        padding: 5px;
+        margin: 7px;
+        margin-bottom: 10px;
+      }
+      .half-width h4 {
+        margin-bottom: 5px;
+      }
+      .half-width ul {
+        padding-left: 0;
+      }
+      .half-width ul li {
+        list-style: inside;
+        font-size: 15px;
+      }
+      .clear-fix {
+        clear: both;
+      }
+    </style>
+    <script src="https://github.com/themes/minimal/javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1><a href="/">atmos.org</a></h1>
+        <!-- <p>Where's Corey now?</p> -->
+
+        <!-- <h3>The Goods</h3> -->
+        <p class="view"><a href="/projects.html">Open Source Projects<small>Code that Might be Useful to You</small></a></p>
+        <p class="view"><a href="/speaking.html">Talks I've Given<small>On Technologies and Ideas</small></a></p>
+
+        
+
+        <h3>Follow Me On</h3>
+        <p class="view"><a href="https://github.com/atmos" target="tab">GitHub<small>If coding is your thing</small></a></li>
+        <p class="view"><a href="https://twitter.com/atmos" target="tab">Twitter<small>If you tweet</small></a></li>
+        <p class="view"><a href="http://tumblr.atmos.org" target="tab">Tumblr<small>If you're ADD</small></a></li>
+        <p class="view"><a href="http://flickr.com/photos/atmos" target="tab">Flickr<small>If you like photos</small></a></li>
+
+      </header>
+      <section id="main">
+        <article>
+<h1>Hancock : A Single Sign On Server in Sinatra</h1>
+<hr/>
+<p>A while back I blogged about the <a href="http://github.com/atmos/flatirons">flatirons</a> <a href="http://openid.net">openid</a> provider and how it was inspired by something we were doing at Engine Yard.  We needed a single sign on provider and chose to use OpenID as the sso protocol.  Since this is heavily influenced by openid I will often use the word &ldquo;<strong>provider</strong>&rdquo; to describe an SSO server.  I also use the word &ldquo;<strong>consumer</strong>&rdquo; to describe an SSO enabled application.</p>
+
+<p>So we pretty much drew up a diagram of how openid works and removed the steps we felt were unnecessary(decision/acceptance steps).  We then extended it by adding auto discovery of the openid url.  Here&rsquo;s a somewhat up to date diagram that shows off how things work.  You&rsquo;ll notice that the user-agent(browser) never specifies its identity url, it&rsquo;s automatically provided from the SSO server.</p>
+
+<p><img src="http://img.skitch.com/20090305-be6wwmbc4gfsi9euy3w7np31mm.jpg" alt="hancock sso handshake" height="500px" width="475px" /></p>
+
+<p>I&rsquo;m pleased to announce a new piece of software that might interest you if you need a single sign on solution for your projects.  It&rsquo;s called <a href="http://github.com/atmos/hancock">hancock</a> and it&rsquo;s available(like all good things) on <a href="http://github.com">github</a>.  Here&rsquo;s a quick run down of what it offers you:</p>
+
+<ul>    <li>a rubygem that provides all the functionality you need for an sso server</li>
+    <li>an sso server as an extendable sinatra app, aka rack middleware</li>
+    <li>a required whitelist for consumer application access</li>
+    <li>configurable sreg response parameters to customize what information is exposed to clients</li>
+    <li>can hook into anything that <a href="http://datamapper.org">datamapper</a> supports as a user/consumer store.</li>
+    <li>trivial deployment as a rack application under passenger</li>
+    <li>simple user signup with email verification</li>
+        <li>application sessions don't overlap by using .domain.com style cookies</li>
+</ul>
+
+
+<p>This is all implemented in about 400 lines of ruby code using the <a href="http://sinatrarb.com">sinatra</a> framework.  With the release of Sinatra 0.9.1.1 programmers can write sinatra applications in a more modular fashion.  The killer feature is that these modular applications are actually <a href="http://github.com/chneukirchen/rack/tree/master">rack</a> applications.  This allows for services to be written in sinatra that can be deployed as either a standalone rack application or used as middleware in frameworks like merb or rails.  Hancock is an example standalone rack application.  I&rsquo;ll be blogging about sinatra as middleware in the days to come.</p>
+
+<p>Hancock requires that you provide atleast three things to get it going.  This is normally provided in your rackup file.</p>
+
+<ul>
+    <li>database connection info, specifically the <a href="http://datamapper.org/doku.php?id=getting_started_with_datamapper#specify_your_database_connection">datamapper connect string</a></li>
+    <li>mailer info</li>
+    <li>a custom layout file</li>
+</ul>
+
+
+<p>Hancock assumes that you&rsquo;re going to provide the layout that gives your site its customized look and feel.  The hancock gem itself provides all of the forms for authentication.  If you&rsquo;re going to be serving static assets like images, stylesheets, or javascript files you&rsquo;ll also need to set the public attribute.  Here&rsquo;s what my rackup file looks like on my server.</p>
+
+<script src="http://gist.github.com/82625.js"></script>
+
+
+<p>That&rsquo;s your whole app.</p>
+
+<p>The Hancock gem provides a sinatra application as a class named <strong>Hancock::App</strong>.  You should inherit from this class and implement a landing page at &ldquo;<strong>/</strong>&rdquo;.  The mailer configuration functions a lot like the merb-mailer gem, if you&rsquo;re having issues google around for merb-mailer help.</p>
+
+<p>The Hancock gem also provides a class named <strong>Hancock::Consumer</strong> that represents a consumer application that is to be accepted by your hancock application.  The <strong>:url</strong> attribute MUST match up to the return_to parameter in the openid negotiation.  If you&rsquo;re using the <a href="http://github.com/atmos/hancock-client">hancock-client</a> gem then it should take care of this for you.  The main thing to remember about this class is that if you ever receive the <strong>Forbidden</strong> message on your SSO provider you should double check that the host is allowed to access the provider.</p>
+
+<p>Your user model is exposed as <strong>Hancock::User</strong>.  Right now there is simple sign up through web forms.  If you want to test the provider without setting up the full email configuration then you should run your application in development mode.  When run under development mode the registration url that would normally be sent via email is embedded as a comment.  I found that it made it really easy to test.</p>
+
+<p>The Hancock gem doesn&rsquo;t have perfect tests, but I&rsquo;ll be damned if we aren&rsquo;t shooting for it.  You&rsquo;ll find both unit and acceptance tests done in <a href="http://rspec.info">rspec</a>, <a href="http://github.com/brynary/rack-test">rack-test</a>, <a href="http://github.com/brynary/webrat">webrat</a>, and <a href="http://github.com/aslakhellesoy/cucumber">cucumber</a>.  Even if you&rsquo;re not interested in an SSO server the tests might help clarify a few things if you&rsquo;re a testing junkie.</p>
+
+<p>As I mentioned earlier, the killer feature of sinatra 0.9.1.1 is that sinatra apps are modular rack applications.  While hancock is a pretty cool example of the power and simplicity of sinatra; its use as middleware in other frameworks is where I expect to see sinatra shine for the foreseeable future.  Even if you&rsquo;re stuck on a never ending rails project with no chance of innovation in sight, go learn about rack.  I think you&rsquo;ll be surprised where you can start leveraging it.  Besides, writing sinatra is <strong>fun</strong>.</p>
+
+<p>So what good is a simple SSO server if you don&rsquo;t have a super simple client library?  I bet if we did it as a <a href="http://github.com/atmos/hancock-client">simple sinatra app</a> then we could turn it into middleware.  Then we could hook our <a href="http://github.com/atmos/hancock-client-rails">rails</a> and <a href="http://github.com/atmos/hancock-client-merb">merb</a> apps up.  Yeah, that&rsquo;d be sweet.</p>
+
+<p>I&rsquo;m gonna follow this up in the next few days with something covering the <a href="http://github.com/atmos/hancock-client">hancock-client</a> gem.  This gem provides a sinatra application that can be run standalone or as middleware in other apps.  I&rsquo;ll prolly follow that up with two short articles on &ldquo;how you get your middleware running in (rails|merb).&rdquo;</p>
+
+</article>
+
+      </section>
+      <footer>
+        <!-- <p>This is the site of Corey Donohoe</p> -->
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+
+    <script type="text/javascript">
+      var _gauges = _gauges || [];
+      (function() {
+        var t   = document.createElement('script');
+        t.type  = 'text/javascript';
+        t.async = true;
+        t.id    = 'gauges-tracker';
+        t.setAttribute('data-site-id', '4eb74c9f613f5d3567000004');
+        t.src = '//secure.gaug.es/track.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(t, s);
+      })();
+    </script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="js/libs/jquery-1.6.2.min.js"><\/script>')</script>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>
