@@ -1,0 +1,976 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>趁复习备考之际记录一些关于C语言进程通信的东东 | CRESCENDO</title>
+  <meta name="author" content="Shukri Chiu">
+  
+  <meta name="description" content="一些关于在linux下面使用C进行进程通信的介绍">
+  
+  <meta name="keywords" content="linux,IPC,c,process,communication">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="趁复习备考之际记录一些关于C语言进程通信的东东"/>
+  <meta property="og:site_name" content="CRESCENDO"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="http://feed.feedsky.com/DETACHMENT" title="CRESCENDO" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+  
+<script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F4f38454fd0bd512a2494e4039711ed6e' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<!-- Start of Woopra Code -->
+<script>
+(function(){
+var t,i,e,n=window,o=document,a=arguments,s="script",r=["config","track","identify","visit","push","call"],c=function(){var t,i=this;for(i._e=[],t=0;r.length>t;t++)(function(t){i[t]=function(){return i._e.push([t].concat(Array.prototype.slice.call(arguments,0))),i}})(r[t])};for(n._w=n._w||{},t=0;a.length>t;t++)n._w[a[t]]=n[a[t]]=n[a[t]]||new c;i=o.createElement(s),i.async=1,i.src="//static.woopra.com/js/w.js",e=o.getElementsByTagName(s)[0],e.parentNode.insertBefore(i,e)
+})("woopra");
+
+woopra.config({
+    domain: 'shujian.me',
+    idle_timeout: 1800000
+});
+woopra.track();
+</script>
+<!-- End of Woopra Code -->
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">CRESCENDO</a></h1>
+  <h2><a href="/">花开堪折直须折 | gather ye rosebuds while ye may</a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">Home</a></li>
+    
+      <li><a href="/archives">Archives</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2013-06-07T16:00:00.000Z"><a href="/2013/06/08/something-about-process-comunication-in-c/">2013-06-08</a></time>
+      
+      
+  
+    <h1 class="title">趁复习备考之际记录一些关于C语言进程通信的东东</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>过两天就要考linux了啦,所以这几天在集中精力复习linux,其实课程讲的比较简单,PPT前几章都没什么好玩的,就最后3章开始介绍文件系统和进程通信的时候才有大量编程的部分,当然这才是最有意思的部分.</p>
+<h2>基本概念</h2>
+<p>通信分两类:  </p>
+<ul>
+<li>控制信息的传递:低级通信</li>
+<li>大批量数据的传递:高级通信</li>
+</ul>
+<p>基本的通信方式有:</p>
+<ul>
+<li>主从式通信(通信双方存在一种隶属关系,特点在于通信过程中主进程对从进程的资源和数据享有使用权限，但是从进程没有)</li>
+<li>会话式通信(通信进程双方采用请求应答的方式进行通信,特点在于通信时使用者进程需要事先得到服务者进程的允许，方能使用服务者进程为其提供的服务)</li>
+<li>消息或邮件通信(通信双方处于一个平等地位，在通信过程中无论接收进程是否准备好，发送进程都可以进行消息发送,特点在于发送进程和接收进程之间不需要建立直接的逻辑关联关系)</li>
+<li>共享存储区通信(进程之间采用信息共享存储区的通信方式来完成进程间的通信,特点在于通信进程双方通过一个共享存储区完成信息交互)</li>
+</ul>
+<p><code>unix</code>系统主要采用三种通信方式:</p>
+<ul>
+<li>基本通信：早期的UNIX系统采用，简单的信息传递，协调进程之间的同步和互斥(包括锁文件通信、记录锁定文件通信、信号三种方式)。</li>
+<li>管道通信：大批量的数据传送，有名管道和无名管道。</li>
+<li>IPC ：采用消息方式进行进程间通信。 </li>
+</ul>
+<p>信号是进程中异步发生事件时发出的提示信息或传送给进程的一种事件通知，是UNIX操作系统用来通知进程发生了某种事件的一种手段。信号可以由用户进程或核心进程发出，提请系统立即将当前进程中已发生的时间想相关进程进行通告。信号提供了一种处理异步事件的方法。信号也可以用于进程之间进行通信和实现进程同步处理。生成信号的事件可以归并为三大类:</p>
+<ul>
+<li>程序错误  例如零作除数、非法存储器访问等</li>
+<li>外部事件 例如用户按下Delete键、定时器到期等</li>
+<li>显式请求 进程主动调用kill函数或者raise函数</li>
+</ul>
+<p><a name="more"></a>
+UNIX系统为每一种可能的事件定义了一组信号，每一个信号有一个信号名，名字均以SIG打头，UNIX系统中常用的信号: </p>
+<table >
+    <tr>
+        <td>&#20449;&#21495;</td>
+        <td>&#25551;&#36848;</td>
+        <td>&#40664;&#35748;&#22788;&#29702;</td>
+    </tr>
+    <tr>
+        <td>SIGABRT</td>
+        <td>&#36827;&#31243;&#24322;&#24120;&#20013;&#27490;&#65292;&#35843;&#29992;abort&#20989;&#25968;&#29983;&#25104;&#35813;&#20449;&#21495;</td>
+        <td>&#24322;&#24120;&#20013;&#27490;</td>
+    </tr>
+    <tr>
+        <td>SIGALRM</td>
+        <td>&#23454;&#26102;&#38393;&#38047;</td>
+        <td>&#36827;&#31243;&#36864;&#20986;</td>
+    </tr>
+    <tr>
+        <td>SIGFPE</td>
+        <td>&#31639;&#26415;&#20363;&#22806;</td>
+        <td>&#24322;&#24120;&#20013;&#27490;</td>
+    </tr>
+    <tr>
+        <td>SIGHUP</td>
+        <td>&#25346;&#36215;&#36827;&#31243;</td>
+        <td>&#36827;&#31243;&#36864;&#20986;</td>
+    </tr>
+    <tr>
+        <td>SIGILL</td>
+        <td>&#38750;&#27861;&#30828;&#20214;&#25351;&#20196;</td>
+        <td>&#24322;&#24120;&#32456;&#27490;</td>
+    </tr>
+    <tr>
+        <td>SIGKILL</td>
+        <td>&#32456;&#27490;&#36827;&#31243;</td>
+        <td>&#36827;&#31243;&#36864;&#20986;</td>
+    </tr>
+    <tr>
+        <td>SIGPIPE</td>
+        <td>&#20889;&#27809;&#26377;&#35835;&#32773;&#30340;&#31649;&#36947;</td>
+        <td>&#36827;&#31243;&#36864;&#20986;</td>
+    </tr>
+    <tr>
+        <td>SIGQUIT</td>
+        <td>&#32456;&#31471;quit&#23383;&#31526; &#65288;ctrl-\&#65289;</td>
+        <td>&#24322;&#24120;&#32456;&#27490;</td>
+    </tr>
+    <tr>
+        <td>SIGSEGV</td>
+        <td>&#38750;&#27861;&#23384;&#20648;&#35775;&#38382;&#65288;&#22320;&#22336;&#36234;&#30028;&#65289;</td>
+        <td>&#24322;&#24120;&#32456;&#27490;</td>
+    </tr>
+    <tr>
+        <td>SIGTERM</td>
+        <td>&#32456;&#27490;&#36827;&#31243;</td>
+        <td>&#36864;&#20986;</td>
+    </tr>
+    <tr>
+        <td>SIGTRAP</td>
+        <td>&#30828;&#20214;&#33258;&#38519;</td>
+        <td>&#24322;&#24120;&#32456;&#27490;</td>
+    </tr>
+    <tr>
+        <td>SIGUSR1</td>
+        <td>&#29992;&#25143;&#33258;&#23450;&#20041;&#20449;&#21495;</td>
+        <td>&#36864;&#20986;</td>
+    </tr>
+    <tr>
+        <td>SIGUSR2</td>
+        <td>&#29992;&#25143;&#33258;&#23450;&#20041;&#20449;&#21495;</td>
+        <td>&#36864;&#20986;</td>
+    </tr>
+    <tr>
+        <td>SIGSTOP</td>
+        <td>&#20572;&#27490;&#36827;&#31243;</td>
+        <td>&#36864;&#20986;</td>
+    </tr>
+</table>
+
+<p>信号的产生，可以使用三个系统调用:</p>
+<ul>
+<li>int raise( int sig );   &gt;  给进程自己发送一个信号</li>
+<li>int kill( pid_t pid,  int sig );   &gt;  发送一个信号给进程或者进程组</li>
+<li>unisigned int  alarm( unsigned int seconds );   &gt;  在seconds秒后向自己发送一个SIGALRM信号</li>
+</ul>
+<p>下面是一个关于kill调用的实例:</p>
+<figure class="highlight lang-c"><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+</pre></td><td class="code"><pre><span class="comment">#include "unistd.h"</span>
+<span class="comment">#include "signal.h"</span>
+<span class="comment">#include "sys/types.h"</span>
+<span class="comment">#include "sys/wait.h"</span>
+<span class="comment">#include "stdio.h"</span>
+
+<span class="title">int</span> main ( int argc, char const *argv[] ) {
+    <span class="title">pid_t</span> pid;
+    <span class="title">int</span> status;
+
+    <span class="title">if</span> ( ! ( pid = fork() ) ) {
+        <span class="title">printf</span> ( <span class="string">"Hi I am child process!\n"</span> );
+        <span class="title">printf</span> ( <span class="string">"My pid is %d\n"</span>, getpid() );
+        <span class="title">sleep</span> ( <span class="number">100</span> );
+        <span class="title">return</span> <span class="number">0</span>;
+    } <span class="title">else</span> {
+        <span class="title">printf</span> ( <span class="string">"send signal to child process(%d)\n"</span>, pid );
+        <span class="title">sleep</span> ( <span class="number">1</span> );
+        <span class="title">kill</span> ( pid, SIGKILL );
+        <span class="title">wait</span> ( &status );
+
+        <span class="title">if</span> ( WIFSIGNALED ( status ) )
+            printf ( <span class="string">"chile process receive signal %d\n"</span>, WTERMSIG ( status ) );
+    }
+
+    <span class="title">return</span> <span class="number">0</span>;
+}
+</pre></td></tr></table></figure>
+
+<p>子进程的结束状态返回后存于status，底下有几个宏可判别结束情况:</p>
+<ul>
+<li>WIFEXITED(status):如果子进程正常结束则为非0值</li>
+<li>WEXITSTATUS(status):取得子进程exit()返回的结束代码，一般会先用WIFEXITED 来判断是否正常结束才能使用此宏</li>
+<li>WIFSIGNALED(status):如果子进程是因为信号而结束则此宏值为真</li>
+<li>WTERMSIG(status):取得子进程因信号而中止的信号代码，一般会先用WIFSIGNALED 来判断后才使用此宏</li>
+<li>WIFSTOPPED(status):如果子进程处于暂停执行情况则此宏值为真。一般只有使用WUNTRACED 时才会有此情况</li>
+<li>WSTOPSIG(status):取得引发子进程暂停的信号代码</li>
+</ul>
+<p><img src="http://sergio-blog.qiniudn.com/kill_instance.png?imageMogr/auto-orient/thumbnail/686/quality/100/format/PNG" alt="程序运行结果"></p>
+<p>alarm调用实例:</p>
+<figure class="highlight lang-c"><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="code"><pre><span class="preprocessor">#include "unistd.h"</span>
+<span class="preprocessor">#include "signal.h"</span>
+<span class="preprocessor">#include "stdio.h"</span>
+<span class="keyword">void</span> handler ( <span class="keyword">int</span> a ) {
+    printf ( <span class="string">"hello\n"</span> );
+}
+<span class="keyword">int</span> main ( <span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[] ) {
+    <span class="keyword">int</span> i;
+    <span class="keyword">signal</span> ( SIGALRM,  handler );
+    alarm ( <span class="number">5</span> );
+
+    <span class="keyword">for</span> ( i = <span class="number">0</span>; i &lt; <span class="number">7</span>; ++i ) {
+        printf ( <span class="string">"sleep %d ... \n"</span>, i );
+        sleep ( <span class="number">1</span> );
+    }
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+</pre></td></tr></table></figure>
+
+<p><img src="http://sergio-blog.qiniudn.com/alarm_instance.png?imageMogr/auto-orient/thumbnail/686/quality/100/format/PNG" alt=""></p>
+<p>实际上信号名都可以使用<code>kill -l</code>命令查询到
+<img src="http://sergio-blog.qiniudn.com/kill-l-instance.png?imageMogr/auto-orient/thumbnail/686/quality/100/format/PNG" alt=""></p>
+<p>下面是用<code>void* signal(int sig , void(* func )(int ))</code>函数捕获SIGINT信号的例子(在<code>Terminal</code>中通过按下<code>Ctrl+C</code>产生):</p>
+<figure class="highlight lang-c"><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="preprocessor">#include "signal.h"</span>
+<span class="preprocessor">#include "stdio.h"</span>
+<span class="preprocessor">#include "unistd.h"</span>
+<span class="keyword">void</span> catch_sig_int ( <span class="keyword">int</span> signo ) {
+    <span class="comment">/* signal (SIGINT, catch_sig_int); */</span>
+    printf ( <span class="string">"SIGINT was caught,user pressed key[delete]\n"</span> );
+    <span class="comment">/* signal (SIGINT, catch_sig_int); */</span>
+}
+<span class="keyword">int</span> main ( <span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[] ) {
+    <span class="keyword">int</span> i = <span class="number">0</span>;
+    <span class="keyword">signal</span> ( SIGINT, catch_sig_int );
+
+    <span class="keyword">for</span> ( i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i ) {
+        printf ( <span class="string">"Sleep called  #%d\n"</span>, i );
+        sleep ( <span class="number">1</span> );
+    }
+
+    printf ( <span class="string">"exiting ...\n"</span> );
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+</pre></td></tr></table></figure>
+
+<p>运行结果如下图:
+<img src="http://sergio-blog.qiniudn.com/signal_instance.png?imageMogr/auto-orient/thumbnail/686/quality/100/format/PNG" alt=""></p>
+<p>下面是关于自定义信号的使用的例子:</p>
+<figure class="highlight lang-c"><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+</pre></td><td class="code"><pre><span class="comment">#include "signal.h"</span>
+<span class="comment">#include "stdio.h"</span>
+<span class="comment">#include "unistd.h"</span>
+<span class="comment">#include "signal.h"</span>
+<span class="comment">#include "stdlib.h"</span>
+void signal_handle ( <span class="keyword">int</span> the_signal ) {
+    <span class="keyword">if</span> ( the_signal == SIGUSR1 )
+        <span class="keyword">printf</span> ( <span class="string">"the signal is SIGUSR1\n"</span> );
+    <span class="keyword">else</span> <span class="keyword">if</span> ( the_signal == SIGUSR2 )
+        <span class="keyword">printf</span> ( <span class="string">"the signal is SIGUSR2\n"</span> );
+    <span class="keyword">else</span>
+        <span class="keyword">printf</span> ( <span class="string">"the received signal is <span class="variable">%d</span>\n"</span>, the_signal );
+}
+<span class="keyword">int</span> main ( <span class="keyword">int</span> argc, char const <span class="variable">*argv</span>[] ) {
+    <span class="keyword">printf</span> ( <span class="string">"the process id is <span class="variable">%d</span>\n"</span>, getpid() );
+
+    <span class="keyword">if</span> ( signal ( SIGUSR1, signal_handle ) == SIG_ERR ) {
+        <span class="keyword">printf</span> ( <span class="string">"Error occurs!\n"</span> );
+        <span class="keyword">exit</span> ( <span class="number">1</span> );
+    }
+
+    <span class="keyword">if</span> ( signal ( SIGUSR2, signal_handle ) == SIG_ERR ) {
+        <span class="keyword">printf</span> ( <span class="string">"Error occurs!\n"</span> );
+        <span class="keyword">exit</span> ( <span class="number">1</span> );
+    }
+
+    <span class="keyword">for</span> ( ; ; ) {
+        pause(); <span class="regexp">//pause</span>()函数等待信号到来
+    }
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+</pre></td></tr></table></figure>
+
+<p>程序运行结果:
+<img src="http://sergio-blog.qiniudn.com/signal_instance.png?imageMogr/auto-orient/thumbnail/686/quality/100/format/PNG" alt=""></p>
+<h2>管道通信</h2>
+<p>UNIX中的管道用于进程通信,是一种先进先出（FIFO）的特殊文件,通常是一个进程向管道中写入数据，另一个进程从管道中读出数据,从而完成通信的目的.</p>
+<p>管道的特点:</p>
+<ul>
+<li>管道单独构成一种特殊的文件</li>
+<li>管道中，写入的内容每次都添加在管道的末尾，并且每次都是从管道的头部读出数据，就像队列</li>
+</ul>
+<p>无名管道一般通过以下三个函数操作:</p>
+<ul>
+<li>int pipe( int fdes[2] )</li>
+<li>int read( int fd, char *buf, int len );</li>
+<li>int write( int fd, char *buf, int len );</li>
+</ul>
+<p>下面是最简单的管道通信的一个例子:</p>
+<figure class="highlight lang-c"><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+</pre></td><td class="code"><pre><span class="comment">#include &lt;unistd.h&gt;</span>
+<span class="comment">#include &lt;stdlib.h&gt;</span>
+<span class="comment">#include &lt;stdio.h&gt;</span>
+<span class="comment">#include "sys/wait.h"</span>
+
+<span class="keyword">int</span> main() {
+    <span class="keyword">int</span> pipe_fd[<span class="number">2</span>];  <span class="regexp">//define</span> <span class="keyword">pipe</span><span class="string">'s in and out, there is a int array
+    pid_t child;
+    char buf_r[100];
+    char *p_buf;
+    int r_num;
+
+    if ( pipe ( pipe_fd ) &lt; 0 ) {
+        printf ( "pipe create error !\n" );
+        exit ( -1 );
+    } else {
+        printf ( "pipe create success !\n" );
+    }
+
+    if ( ( child = fork() ) == 0 ) {
+        // child process coming
+        printf ( "\n" );
+        close ( pipe_fd[1] ); //close father'</span><span class="keyword">s</span> <span class="keyword">write</span> <span class="keyword">pipe</span>
+        <span class="keyword">sleep</span> ( <span class="number">2</span> );
+
+        <span class="keyword">if</span> ( ( r_num = <span class="keyword">read</span> ( pipe_fd[<span class="number">0</span>], buf_r, <span class="number">100</span> ) ) &gt; <span class="number">0</span> ) {
+            <span class="keyword">printf</span> ( <span class="string">"<span class="variable">%d</span> numbers read from the pipe is <span class="variable">%s</span> \n"</span>, r_num, buf_r );
+        }
+
+        <span class="keyword">close</span> ( pipe_fd[<span class="number">0</span>] ); <span class="regexp">//</span> <span class="keyword">close</span> <span class="keyword">read</span> <span class="keyword">pipe</span>
+        <span class="keyword">exit</span> ( <span class="number">0</span> );
+    } <span class="keyword">else</span> <span class="keyword">if</span> ( child &gt; <span class="number">0</span> ) {
+        <span class="keyword">printf</span> ( <span class="string">"child=<span class="variable">%d</span> \n"</span>, child );
+        <span class="keyword">printf</span> ( <span class="string">"father pid= <span class="variable">%d</span> \n"</span>, getpid() );
+        <span class="keyword">close</span> ( pipe_fd[<span class="number">0</span>] ); <span class="regexp">//close</span> child<span class="string">'s read pipe
+
+        if ( write ( pipe_fd[1], "hello", 5 ) != -1 )
+            printf ( "parent write1 hello !\n" );
+
+        if ( write ( pipe_fd[1], "HELLO", 5 ) != -1 )
+            printf ( "parent write2 HELLO ! \n" );
+
+        close ( pipe_fd[1] ); // close farther'</span><span class="keyword">s</span> <span class="keyword">write</span>
+        <span class="keyword">waitpid</span> ( child, NULL, <span class="number">0</span> ); <span class="regexp">//wait</span> child to release resource
+        <span class="keyword">return</span> <span class="number">0</span>;
+    }
+}
+</pre></td></tr></table></figure>
+
+<p>程序运行结果(最下面有个EOF乱码问题,暂时还不知道如何解决)：
+<img src="http://sergio-blog.qiniudn.com/pipe_instance.png?imageMogr/auto-orient/thumbnail/686/quality/100/format/PNG" alt=""></p>
+<p>另一种方式是有名管道:</p>
+<table >
+   <tr>
+      <td>&#29305;&#24615;</td>
+      <td>&#26377;&#21517;&#31649;&#36947;</td>
+      <td>&#26080;&#21517;&#31649;&#36947;</td>
+   </tr>
+   <tr>
+      <td>&#36827;&#31243;&#30340;&#20351;&#29992;&#36164;&#26684;</td>
+      <td>&#27809;&#26377;&#38480;&#21046;</td>
+      <td>&#24517;&#39035;&#26377;&#29238;&#23376;&#20851;&#31995;</td>
+   </tr>
+   <tr>
+      <td>&#25991;&#20214;&#21517;&#31216;</td>
+      <td>&#26377;&#25991;&#20214;&#21517;&#65292;&#21487;&#20197;&#29992;ls –l&#26597;&#30475;&#65292;&#20854;&#25991;&#20214;&#23646;&#24615;&#20026;p</td>
+      <td>&#27809;&#26377;&#25991;&#20214;&#21517;&#31216;</td>
+   </tr>
+   <tr>
+      <td>&#25968;&#25454;&#35835;&#20889;&#30340;&#27425;&#24207;</td>
+      <td>&#20808;&#36827;&#20808;&#20986;</td>
+      <td>&#20808;&#36827;&#20808;&#20986;</td>
+   </tr>
+   <tr>
+      <td>&#24314;&#31435;&#30340;&#26041;&#24335;</td>
+      <td>&#20351;&#29992;mkfifo&#25110;&#32773;mknod&#20989;&#25968;</td>
+      <td>&#20351;&#29992;pipe&#20989;&#25968;</td>
+   </tr>
+   <tr>
+      <td>&#21024;&#38500;&#30340;&#26041;&#24335;</td>
+      <td>&#20351;&#29992;rm&#21629;&#20196;&#25110;&#32773;unlink&#20989;&#25968;</td>
+      <td>&#34987;&#20351;&#29992;&#23436;&#21518;&#65292;&#20250;&#34987;&#33258;&#21160;&#21024;&#38500;</td>
+   </tr>
+</table>
+
+<p>通常使用的有名管道相关函数有：</p>
+<ul>
+<li>int mkfifo( char *path, mode_t mode );</li>
+<li>int mknod( char *path, mode_t mode, dev_t dev );</li>
+<li>int mkfifo( “/home/user1/myfifo”, 0666 );</li>
+<li>int mknod( “/home/user1/myfifo”, 0666|S_IFIFO, 0);</li>
+<li>int open(const char* filename,int flags[,mode_t mode]);</li>
+<li>int read( int fd, char *buf, int len );</li>
+<li>int write( int fd, char *buf, int len );</li>
+<li>int close (int fd);</li>
+</ul>
+<h2>IPC</h2>
+<p>在IPC (Interprocess communication)的通信模式通常有三种：消息队列、信号量、共享内存。</p>
+<ul>
+<li>消息队列方式：使用一个消息结构完成进程间分类格式化数据的传送</li>
+<li>共享存储区方式：允许进程间共享 虚地址空间的某些区域，以达到信息传送的效果</li>
+<li>信号量方式：允许进程在一组信号量上进行交互，完成同步地执行</li>
+</ul>
+<p>以下是信号与消息的比较:</p>
+<table >
+   <tr>
+      <td>&#29305;&#24615;</td>
+      <td>&#20449;&#21495;</td>
+      <td>&#28040;&#24687;</td>
+   </tr>
+   <tr>
+      <td>&#25968;&#25454;&#20869;&#23481;</td>
+      <td>&#21482;&#26159;&#19968;&#20123;&#39044;&#35774;&#22909;&#30340;&#20195;&#30721;&#29992;&#20197;&#34920;&#31034;&#31995;&#32479;&#21457;&#29983;&#30340;&#26576;&#20123;&#29366;&#20917;</td>
+      <td>&#20026;&#19968;&#32452;&#36830;&#32493;&#35821;&#21477;&#25110;&#32773;&#31526;&#21495;&#65292;&#36890;&#24120;&#37327;&#19981;&#20250;&#22826;&#22823;(&#27604;&#22914;1024&#23383;&#33410;)</td>
+   </tr>
+   <tr>
+      <td>&#29992;&#36884;</td>
+      <td>&#25285;&#20219;&#36827;&#31243;&#38388;&#23569;&#37327;&#20449;&#24687;&#30340;&#20256;&#36865;&#65292;&#22810;&#21322;&#26159;&#26680;&#24515;&#31243;&#24207;&#29992;&#26469;&#36890;&#30693;&#29992;&#25143;&#36827;&#31243;&#19968;&#20123;&#24322;&#24120;&#30340;&#29366;&#20917;</td>
+      <td>&#29992;&#20110;&#36827;&#31243;&#20043;&#38388;&#24444;&#27492;&#36827;&#34892;&#25968;&#25454;&#20132;&#25442;</td>
+   </tr>
+   <tr>
+      <td>&#21457;&#36865;&#26102;&#21051;</td>
+      <td>&#20219;&#20309;&#26102;&#38388;</td>
+      <td>&#19981;&#26159;&#20219;&#20309;&#26102;&#21051;&#37117;&#21487;&#20197;&#21457;&#36865;</td>
+   </tr>
+   <tr>
+      <td>&#21457;&#36865;&#32773;&#36776;&#35782;</td>
+      <td>&#19981;&#30693;&#36947;&#21457;&#36865;&#32773;&#26159;&#35841;</td>
+      <td>&#26126;&#30830;&#30693;&#36947;&#21457;&#36865;&#32773;&#26159;&#35841;</td>
+   </tr>
+   <tr>
+      <td>&#36865;&#24448;&#23545;&#35937;</td>
+      <td>&#26576;&#20010;&#36827;&#31243;</td>
+      <td>&#28040;&#24687;&#38431;&#21015;</td>
+   </tr>
+   <tr>
+      <td>&#22788;&#29702;&#26041;&#27861;</td>
+      <td>&#21487;&#20197;&#22788;&#29702;&#25110;&#32773;&#19981;&#20104;&#29702;&#20250;</td>
+      <td>&#24517;&#39035;&#35201;&#22788;&#29702;</td>
+   </tr>
+   <tr>
+      <td>&#25968;&#25454;&#20256;&#36755;&#25928;&#29575;</td>
+      <td>&#19981;&#36866;&#21512;&#36739;&#22823;&#37327;&#30340;&#20449;&#24687;&#20256;&#36755;&#65292;&#25928;&#29575;&#24046;</td>
+      <td>&#23545;&#20013;&#31561;&#25968;&#37327;&#30340;&#25968;&#25454;&#20256;&#36865;&#25928;&#29575;&#22909;</td>
+   </tr>
+</table>
+
+<p>消息的接受需要用到函数<code>msgrcv</code>,消息队列的控制需要用到函数<code>msgctl</code><br>下面是一段进程间通信的例子</p>
+<figure class="highlight lang-c"><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+</pre></td><td class="code"><pre><span class="comment">/**
+program1.c 
+recieve text from program2.c 's instance
+have fun !
+**/</span>
+
+<span class="preprocessor">#include "sys/types.h"</span>
+<span class="preprocessor">#include "sys/ipc.h"</span>
+<span class="preprocessor">#include "sys/msg.h"</span>
+<span class="preprocessor">#include "stdio.h"</span>
+<span class="preprocessor">#include "string.h"</span>
+<span class="preprocessor">#include "stdlib.h"</span>
+
+<span class="keyword">struct</span>  my_msg {
+    <span class="keyword">long</span> mytype;
+    <span class="keyword">char</span> text[<span class="number">256</span>];
+};
+<span class="keyword">int</span> main ( <span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[] ) {
+    <span class="keyword">int</span> running  = <span class="number">1</span>;
+    <span class="keyword">int</span> msgid;
+    <span class="keyword">struct</span> my_msg msgbuf;
+    msgid = msgget ( ( key_t ) <span class="number">1234</span>,<span class="constant"> IPC_CREAT </span>| <span class="number">0666</span> );
+
+    if ( msgid &lt; <span class="number">0</span> )
+        exit ( <span class="number">1</span> );
+
+    <span class="keyword">while</span> ( running ) {
+        if (msgrcv ( msgid , ( <span class="keyword">void</span> * ) &msgbuf, <span class="number">256</span>, <span class="number">1</span>, <span class="number">0</span> ) ) {
+            <span class="comment">// deal with error occur</span>
+            printf ( <span class="string">"you wrote : %s \n"</span>, msgbuf.text );
+        }
+
+        if ( strncmp ( msgbuf.text , <span class="string">"end"</span>, <span class="number">3</span> ) == <span class="number">0</span> ) {
+            running = <span class="number">0</span>;
+        }
+    }
+
+    if ( msgctl ( msgid, IPC_RMID, <span class="number">0</span> ) == -<span class="number">1</span> ) {
+        <span class="comment">// deal with error occur</span>
+    }
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+
+
+<span class="comment">/**
+program2.c 
+send text to program1.c 's instance
+have fun !
+**/</span>
+
+<span class="preprocessor">#include "sys/types.h"</span>
+<span class="preprocessor">#include "sys/ipc.h"</span>
+<span class="preprocessor">#include "sys/msg.h"</span>
+<span class="preprocessor">#include "stdio.h"</span>
+<span class="preprocessor">#include "string.h"</span>
+<span class="preprocessor">#include "stdlib.h"</span>
+
+<span class="keyword">struct</span>  my_msg {
+    <span class="keyword">long</span> mytype;
+    <span class="keyword">char</span> text[<span class="number">256</span>];
+};
+<span class="keyword">int</span> main ( <span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[] ) {
+    <span class="keyword">int</span> running  = <span class="number">1</span>;
+    <span class="keyword">int</span> msgid;
+    <span class="keyword">struct</span> my_msg msgbuf;
+    msgid = msgget ( ( key_t ) <span class="number">1234</span>,<span class="constant"> IPC_CREAT </span>| <span class="number">0666</span> );
+
+    if ( msgid &lt; <span class="number">0</span> )
+        exit ( <span class="number">1</span> );
+
+    <span class="keyword">while</span> ( running ) {
+        printf ( <span class="string">"Enter some text :"</span> );
+        gets ( msgbuf .text );
+        msgbuf.mytype = <span class="number">1</span>;
+
+        if (  msgsnd ( msgid, ( <span class="keyword">void</span> * ) &msgbuf, <span class="number">256</span>, <span class="number">0</span> ) == -<span class="number">1</span> ) {
+            <span class="comment">// deal with error occurs</span>
+        }
+
+        if ( strncmp ( msgbuf.text, <span class="string">"end"</span>, <span class="number">3</span> ) == <span class="number">0</span> ) {
+            running = <span class="number">0</span>;
+        }
+    }
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+</pre></td></tr></table></figure>
+
+<p>程序运行结果如下:
+<img src="http://sergio-blog.qiniudn.com/ipc_instance.png?imageMogr/auto-orient/thumbnail/686/quality/100/format/PNG" alt=""></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/c-1/">c</a>, <a href="/tags/IPC/">IPC</a>, <a href="/tags/Process-Comunication/">Process Comunication</a>, <a href="/tags/linux/">linux</a>
+  </div>
+
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">Comments</h1>
+  <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+</section>
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="Search">
+    <input type="hidden" name="q" value="site:shujian.me/">
+  </form>
+</div>
+
+  
+<div class="widget tag">
+  <h3 class="title">Categories</h3>
+  <ul class="entry">
+  
+    <li><a href="/categories/Algorithm/">Algorithm</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+
+  
+<div class="widget tag">
+  <h3 class="title">Tags</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Behance/">Behance</a><small>1</small></li>
+  
+    <li><a href="/tags/GRE/">GRE</a><small>1</small></li>
+  
+    <li><a href="/tags/IOS/">IOS</a><small>1</small></li>
+  
+    <li><a href="/tags/IPC/">IPC</a><small>1</small></li>
+  
+    <li><a href="/tags/Mac-OS-X/">Mac OS X</a><small>1</small></li>
+  
+    <li><a href="/tags/Process-Comunication/">Process Comunication</a><small>1</small></li>
+  
+    <li><a href="/tags/apple/">apple</a><small>1</small></li>
+  
+    <li><a href="/tags/blog/">blog</a><small>1</small></li>
+  
+    <li><a href="/tags/c-1/">c</a><small>1</small></li>
+  
+    <li><a href="/tags/creative/">creative</a><small>1</small></li>
+  
+    <li><a href="/tags/diff/">diff</a><small>1</small></li>
+  
+    <li><a href="/tags/github-page/">github page</a><small>1</small></li>
+  
+    <li><a href="/tags/incapsula/">incapsula</a><small>1</small></li>
+  
+    <li><a href="/tags/jekyll/">jekyll</a><small>1</small></li>
+  
+    <li><a href="/tags/life/">life</a><small>1</small></li>
+  
+    <li><a href="/tags/linux/">linux</a><small>1</small></li>
+  
+    <li><a href="/tags/nodejs/">nodejs</a><small>1</small></li>
+  
+    <li><a href="/tags/rails/">rails</a><small>1</small></li>
+  
+    <li><a href="/tags/ruby/">ruby</a><small>1</small></li>
+  
+    <li><a href="/tags/webrtc/">webrtc</a><small>1</small></li>
+  
+    <li><a href="/tags/websocket/">websocket</a><small>1</small></li>
+  
+    <li><a href="/tags/woopra/">woopra</a><small>1</small></li>
+  
+    <li><a href="/tags/wwdc/">wwdc</a><small>1</small></li>
+  
+    <li><a href="/tags/动态规划/">动态规划</a><small>1</small></li>
+  
+    <li><a href="/tags/北京/">北京</a><small>2</small></li>
+  
+    <li><a href="/tags/回溯/">回溯</a><small>1</small></li>
+  
+    <li><a href="/tags/堆排序/">堆排序</a><small>1</small></li>
+  
+    <li><a href="/tags/妙峰山/">妙峰山</a><small>1</small></li>
+  
+    <li><a href="/tags/快速排序/">快速排序</a><small>1</small></li>
+  
+    <li><a href="/tags/新东方/">新东方</a><small>1</small></li>
+  
+    <li><a href="/tags/新東方/">新東方</a><small>1</small></li>
+  
+    <li><a href="/tags/时间复杂度/">时间复杂度</a><small>1</small></li>
+  
+    <li><a href="/tags/算法/">算法</a><small>2</small></li>
+  
+    <li><a href="/tags/缘护天下/">缘护天下</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+
+  
+
+
+  <div class="widget music">
+  <h3 class="title">Favorite Albums</h3>
+  <br>
+  <iframe style="border: 0; width: 270px; height: 270px;" src="http://bandcamp.com/EmbeddedPlayer/album=2392825603/size=large/bgcol=ffffff/linkcol=63b2cc/transparent=true/" seamless><a href="http://mikecavanaugh.bandcamp.com/album/lovely-lonely-place">Lovely Lonely Place by Mike Cavanaugh</a></iframe>
+  <iframe style="border: 0; width: 270px; height: 270px;" src="http://bandcamp.com/EmbeddedPlayer/album=2402931004/size=large/bgcol=ffffff/linkcol=63b2cc/transparent=true/" seamless><a href="http://locirecords.bandcamp.com/album/dusk-to-dawn">Dusk to Dawn by Emancipator</a></iframe>
+  <iframe style="border: 0; width: 270px; height: 270px;" src="http://bandcamp.com/EmbeddedPlayer/album=2161956980/size=large/bgcol=ffffff/linkcol=63b2cc/transparent=true/" seamless><a href="http://lullatone.bandcamp.com/album/soundtracks-for-everyday-adventures">Soundtracks for Everyday Adventures by Lullatone</a></iframe>
+  <iframe style="border: 0; width: 270px; height: 270px;" src="http://bandcamp.com/EmbeddedPlayer/album=2075294543/size=large/bgcol=ffffff/linkcol=63b2cc/transparent=true/" seamless><a href="http://thepaperbacks.bandcamp.com/album/an-illusion-against-death">An Illusion Against Death by The Paperbacks</a></iframe>
+  <iframe style="border: 0; width: 270px; height: 270px;" src="http://bandcamp.com/EmbeddedPlayer/album=1034625230/size=large/bgcol=ffffff/linkcol=63b2cc/transparent=true/" seamless><a href="http://ohdaughter.bandcamp.com/album/his-young-heart-ep">His Young Heart EP by Daughter</a></iframe>
+  <iframe style="border: 0; width: 270px; height: 270px;" src="http://bandcamp.com/EmbeddedPlayer/album=1101947474/size=large/bgcol=ffffff/linkcol=63b2cc/transparent=true/" seamless><a href="http://emancipator.bandcamp.com/album/safe-in-the-steep-cliffs">safe in the steep cliffs by emancipator</a></iframe>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2013 Shukri Chiu
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+<script type="text/javascript">
+var disqus_shortname = 'shukrichiu';
+
+(function(){
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript';
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+}());
+</script>
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
