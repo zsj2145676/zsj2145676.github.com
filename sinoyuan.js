@@ -1,1 +1,1 @@
-alert("hello,world");
+alert("this is my first bookmarklets");
