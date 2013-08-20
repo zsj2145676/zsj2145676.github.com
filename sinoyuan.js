@@ -1,1 +1,1 @@
-alert("this is my first bookmarklets");
+alert("this is my first bookmarklets，and now let's start a new app");
